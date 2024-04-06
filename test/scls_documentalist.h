@@ -17,25 +17,28 @@
 //
 // This file represents an access to the SCLS Documentalist files.
 // It include every SCLS Documentalist needed files.
-// You juste have to include it in you other project to use SCLS Documentalist.
+// You just have to include it in you other project to use SCLS Documentalist.
 //
 //******************
 //
 // License (GPLv3)
 //
 // This file is part of SCLS Documentalist.
-//
+// 
 // SCLS Documentalist is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-//
+// 
 // SCLS Documentalist is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 // See the GNU General Public License for more details.
-//
+// 
 // You should have received a copy of the GNU General Public License along with SCLS Documentalist. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef SCLS_DOCUMENTALIST
-#define SCLS_DOCUMENTALIST
+//******************
+//
+// Includes
+//
+//******************
 
+// headers/scls_documentalist_writer.h -> The writer header of SCLS Documentalist.
 #include "headers/scls_documentalist_writer.h"
 
-#endif // SCLS_DOCUMENTALIST
