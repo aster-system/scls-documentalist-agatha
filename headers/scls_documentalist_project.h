@@ -31,27 +31,13 @@
 // You should have received a copy of the GNU General Public License along with scls_documentalist_test. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef SCLS_DOCUMENTALIST_WRITER
-#define SCLS_DOCUMENTALIST_WRITER
+#ifndef SCLS_DOCUMENTALIST_PROJECT
+#define SCLS_DOCUMENTALIST_PROJECT
 
-#include <scls_foundation.h>
+#include "scls_documentalist_cpp_ressources.h"
 
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
-
-    // Base text
-    static std::string source_cpp_description_text = "This file is the source file of *.";
-
-    struct Include {
-        // Struct representing datas about included files
-
-        // Description of the included file
-        std::string description = "Iostream is a standart C++ library.\nIt allows the program to communicate with the user easily.";
-        // If the included file is a system included file or not
-        bool is_system = true;
-        // Name of the included file
-        std::string name = "iostream";
-    };
 
     struct License {
         // Struct representing the used license in a project, by default to GPL V3.0
@@ -69,9 +55,9 @@ namespace scls {
         File_To_Document(std::string path);
 
         // Add an include to the file
-        inline Include* new_include(std::string name, std::string description) {if(contains_include_by_name(name)) return 0;Include inc;inc.name = name;inc.description = description;included_files().push_back(inc);return &(included_files()[included_files().size() - 1]);};
+        inline Included_File* new_include(std::string name, std::string description) {if(contains_include_by_name(name)) return 0;Included_File inc;inc.name = name;inc.description = description;included_files().push_back(inc);return &(included_files()[included_files().size() - 1]);};
         // Add an include to the file which can be a local file
-        inline Include* new_include(std::string name, std::string description, bool is_system) {if(contains_include_by_name(name)) return 0;Include inc;inc.name = name;inc.description = description;inc.is_system = is_system;included_files().push_back(inc);return &(included_files()[included_files().size() - 1]);};
+        inline Included_File* new_include(std::string name, std::string description, bool is_system) {if(contains_include_by_name(name)) return 0;Included_File inc;inc.name = name;inc.description = description;inc.is_system = is_system;included_files().push_back(inc);return &(included_files()[included_files().size() - 1]);};
 
         // Returns the include part of the file
         std::string include_part() {
@@ -98,14 +84,14 @@ namespace scls {
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string description() const {return a_description;};
-        inline std::vector<Include>& included_files() {return a_included_files;};
+        inline std::vector<Included_File>& included_files() {return a_included_files;};
         inline std::string path() const {return a_path;};
         inline void set_description(std::string new_description) {a_description = new_description;};
     private:
         // Description of the file
         std::string a_description = "";
         // Included files into the file
-        std::vector<Include> a_included_files = std::vector<Include>();
+        std::vector<Included_File> a_included_files = std::vector<Included_File>();
         // Path of the file
         std::string a_path = "";
     };
@@ -117,6 +103,7 @@ namespace scls {
         Project();
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
+        inline std::string compiler_includes_path() const {return a_compiler_includes_path;};
         inline std::string description() const {return a_description;};
         inline std::string name() const {return a_name;};
         inline std::string path() const {return a_path;};
@@ -137,7 +124,13 @@ namespace scls {
         // Analyse the project
         void analyse();
         // Analyse a file of the project
-        void analyse_file(std::string path);
+        bool analyse_file(std::string file_path);
+        // Format a file like it was compiled soon
+        std::string format_file_as_compiler(std::string file_path);
+        // Format a file to use it from an include
+        std::string format_file_to_include_in_file(std::string content_str, std::string included_path, std::string includer_path);
+        // Format a compiler file to use it from an include
+        std::string format_compiler_file_to_include_in_file(std::string content_str);
 
         // Save all the project in the asked path
         bool save_all(std::string path);
@@ -147,6 +140,8 @@ namespace scls {
         // Vector of all the files in the project
         std::vector<File_To_Document> a_files = std::vector<File_To_Document>();
 
+        // Compiler's includes path
+        std::string a_compiler_includes_path = "C:\\msys64\\ucrt64\\include\\";
         // Description of the project
         std::string a_description = "";
         // Name of the project
@@ -156,4 +151,4 @@ namespace scls {
     };
 }
 
-#endif // SCLS_DOCUMENTALIST_WRITER
+#endif // SCLS_DOCUMENTALIST_PROJECT

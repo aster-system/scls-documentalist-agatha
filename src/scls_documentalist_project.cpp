@@ -81,27 +81,186 @@ namespace scls {
         }
 
         for(int i = 0;i<static_cast<int>(src_files.size());i++) {
-            analyse_file(src_files[i]);
+            bool result = analyse_file(src_files[i]);
+            if(!result) {
+                print("Error", "SCLS Documentalist project \"" + name() + "\"", "The analyse has failed.");
+                return;
+            }
         }
     }
 
     // Analyse a file of the project
-    void Project::analyse_file(std::string path) {
-        std::vector<std::string> content = cut_string(read_file(path), "\n", true, true);
+    bool Project::analyse_file(std::string file_path) {
+        std::string final_content = format_file_as_compiler(file_path);
+
+        std::cout << file_path << std::endl << final_content << std::endl << "===============================================" << std::endl;
+
+        return true;
+    }
+
+    // Format a file like it was compiled soon
+    std::string Project::format_file_as_compiler(std::string file_path) {
+        std::string parent_path = file_path.substr(0, file_path.size() - (file_name(file_path, true).size()));
+        std::vector<std::string> content = cut_string(read_file(file_path), "\n", true, true);
 
         for(int i = 0;i<static_cast<int>(content.size());i++) {
-            // Ignore the comments and the empty lines
-            content[i] = content[i].substr(0, content[i].size() - 1);
-            if(content[i].substr(0, 2) == "//" || content[i] == "") continue;
+            std::string line = content[i];
 
-            print("Debug", "SCLS Project analyse", content[i]);
+            // Ignore the comments and the empty lines
+            if(line[line.size() - 1] != '\"' && line[line.size() - 1] != '>')line = line.substr(0, line.size() - 1);
+            if(line.substr(0, 2) == "//" || line == "") continue;
+
+            while(line[0] == ' ') line = line.substr(1, line.size() - 1);
+
+            // Check if its a preprocessing directive
+            if(line[0] == '#') {
+                line = line.substr(1, line.size() - 1);
+
+                int pos = 0; while(line[pos]!=' '&&line[pos]!='\"'&&line[pos]!='<')pos++;
+                int offset = 0; while(line[pos + offset]==' ') offset++;
+
+                // Get the type
+                std::string type_str = line.substr(0, pos);
+                Preprocessor_Directive_Types type = string_to_preprocessor_directive_type(type_str);
+                if(type == Preprocessor_Directive_Types::Unknow) {
+                    print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The preprocessing directive \"" + type_str + "\" is unknow at line " + std::to_string(i + 1) + ".");
+                    return "";
+                }
+
+                // If a file is included
+                if(type == Preprocessor_Directive_Types::Include) {
+                    std::string included = line.substr(type_str.size() + offset, line.size() - (type_str.size() + offset));
+                    // Local file
+                    std::string content_str = "";
+                    std::cout << "O " << included << std::endl;
+                    if(included[0] == '\"' && included[included.size() - 1] == '\"') {
+                        included = included.substr(1, included.size() - 2);
+                        if(included[1] != ':') included = format_path(parent_path + included);
+                        if(!std::filesystem::exists(included)) {
+                            print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The included file \"" + included + "\" does not exist at line " + std::to_string(i + 1) + ".");
+                            return "";
+                        }
+                        if(included[1] != ':') content_str = format_file_to_include_in_file(read_file(included), included, file_path);
+                        else format_compiler_file_to_include_in_file(read_file(included));
+                    }
+                    else if(included[0] == '<' && included[included.size() - 1] == '>') {
+                        included = included.substr(1, included.size() - 2);
+                        if(!contains(included, ".")) included += ".h";
+                        included = compiler_includes_path() + included;
+                        content_str = format_compiler_file_to_include_in_file(read_file(included));
+                    }
+                    else {
+                        print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The included file \"" + included + "\" is badly syntaxed at line " + std::to_string(i + 1) + ".");
+                        return "";
+                    }
+
+                    std::vector<std::string> cutted_content = cut_string(content_str, "\n");
+                    std::vector<std::string> final_lines = std::vector<std::string>();
+                    for(int j = 0;j<i;j++) {
+                        final_lines.push_back(content[j]);
+                    }
+                    for(int j = 0;j<static_cast<int>(cutted_content.size());j++) {
+                        final_lines.push_back(cutted_content[j]);
+                    }
+                    for(int j = 1;j<(static_cast<int>(content.size()) - (i + 1));j++) {
+                        final_lines.push_back(content[i + 1 + j]);
+                    }
+                    content = final_lines;
+                    i = -1;
+                    continue;
+                }
+            }
         }
+
+        return join_string(content, "\n");
+    }
+
+    // Format at file to use it from an include
+    std::string Project::format_file_to_include_in_file(std::string content_str, std::string included_path, std::string includer_path) {
+        std::vector<std::string> content = cut_string(content_str, "\n", true, true);
+        std::vector<std::string> final_content = std::vector<std::string>();
+
+        for(int i = 0;i<static_cast<int>(content.size());i++) {
+            std::string line = content[i];
+
+            // Ignore the comments and the empty lines
+            line = line.substr(0, line.size() - 1);
+            if(line == "" || line.substr(0, 2) == "//") continue;
+
+            while(line[0] == ' ') line = line.substr(1, line.size() - 1);
+
+            // Check if its a preprocessing directive
+            if(line[0] == '#') {
+                line = line.substr(1, line.size() - 1);
+                std::vector<std::string> cutted = cut_string(line, " ");
+
+                // Get the type
+                Preprocessor_Directive_Types type = string_to_preprocessor_directive_type(cutted[0]);
+
+                // If a file is included
+                if(type == Preprocessor_Directive_Types::Include) {
+                    std::string included = line.substr(cutted[0].size() + 1, line.size() - (cutted[0].size() + 1));
+                    // Local file
+                    if(included[0] == '\"' && included[included.size() - 1] == '\"') {
+                        included = included.substr(1, included.size() - 2);
+                        std::string way = go_from_path_to_path(includer_path, included_path);
+                        included = way + included;
+                        line = "#include \"" + included + "\"";
+                    }
+                    else line = "#include " + included;
+                }
+            }
+
+            final_content.push_back(line);
+        }
+        return join_string(final_content, "\n");
+    }
+
+    // Format a compiler file to use it from an include
+    std::string Project::format_compiler_file_to_include_in_file(std::string content_str) {
+        std::vector<std::string> content = cut_string(content_str, "\n", true, true);
+        std::vector<std::string> final_content = std::vector<std::string>();
+
+        for(int i = 0;i<static_cast<int>(content.size());i++) {
+            std::string line = content[i];
+
+            // Ignore the comments and the empty lines
+            line = line.substr(0, line.size() - 1);
+            if(line == "" || line.substr(0, 2) == "//") continue;
+
+            while(line[0] == ' ') line = line.substr(1, line.size() - 1);
+
+            // Check if its a preprocessing directive
+            if(line[0] == '#') {
+                line = line.substr(1, line.size() - 1);
+                std::vector<std::string> cutted = cut_string(line, " ");
+
+                // Get the type
+                Preprocessor_Directive_Types type = string_to_preprocessor_directive_type(cutted[0]);
+
+                // If a file is included
+                if(type == Preprocessor_Directive_Types::Include) {
+                    std::string included = line.substr(cutted[0].size() + 1, line.size() - (cutted[0].size() + 1));
+                    // Local file
+                    if(included[0] == '\"' && included[included.size() - 1] == '\"') {
+                        included = included.substr(1, included.size() - 2);
+                        std::string way = compiler_includes_path();
+                        included = way + included;
+                        line = "#include \"" + included + "\"";
+                    }
+                    else line = "#include " + included;
+                }
+            }
+
+            final_content.push_back(line);
+        }
+        return join_string(final_content, "\n");
     }
 
     // Save all the project in the asked path
     bool Project::save_all(std::string save_path) {
         if(!std::filesystem::exists(save_path)) {
-            scls::print("Warning", "SCLS Documentalist project \"" + path() + "\"", "The path \"" + save_path + "\" you want to save the project does not exist.");
+            scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The path \"" + save_path + "\" you want to save the project does not exist.");
             return false;
         }
 

@@ -49,14 +49,22 @@ int main() {
     main_header->set_description("This file represents an access to the SCLS Documentalist files.\nIt include every SCLS Documentalist needed files.\nYou just have to include it in you other project to use SCLS Documentalist.");
 
     scls::File_To_Document* project_header = project.new_file("headers/scls_documentalist_project.h");
-    project_header->new_include("scls_foundation.h", "The foundation of the SCLS project, used in SCLS Documentalist.");
+    project_header->new_include("scls_documentalist_cpp_ressources.h", "The ressources to clearly run SCLS Documentalist.", false);
     project_header->set_description("This file contains the project system of SCLS Documentalist.");
 
     scls::File_To_Document* project_cpp = project.new_file("src/scls_documentalist_project.cpp");
     project_cpp->new_include("../headers/scls_documentalist_project.h", "The header of this file.", false);
     project_cpp->set_source_cpp_description();
 
-    project.save_all("scls_documentalist_test");
+    scls::File_To_Document* cpp_ressources_header = project.new_file("headers/scls_documentalist_cpp_ressources.h");
+    cpp_ressources_header->new_include("scls_foundation.h", "The foundation of the SCLS project, used in SCLS Documentalist.");
+    cpp_ressources_header->set_description("This file contains the ressources to use properly C++ with Documentalist.");
+
+    scls::File_To_Document* cpp_ressources_cpp = project.new_file("src/scls_documentalist_cpp_ressources.cpp");
+    cpp_ressources_cpp->new_include("../headers/scls_documentalist_cpp_ressources.h", "The header of this file.", false);
+    cpp_ressources_cpp->set_source_cpp_description();
+
+    // project.save_all("scls_documentalist_test");
 
     scls::Project project_2 = scls::Project();
     project_2.set_path("scls_documentalist_test");

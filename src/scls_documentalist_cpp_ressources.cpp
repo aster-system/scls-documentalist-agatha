@@ -1,6 +1,6 @@
 //******************
 //
-// scls_documentalist_test -> headers/scls_documentalist_project.h
+// scls_documentalist_test -> src/scls_documentalist_cpp_ressources.cpp
 //
 //******************
 //
@@ -13,30 +13,27 @@
 //
 //******************
 //
-// headers/scls_documentalist_project.h description
+// src/scls_documentalist_cpp_ressources.cpp description
 //
-// This file contains the project system of SCLS Documentalist.
+// This file is the source file of scls_documentalist_cpp_ressources.h.
 //
 //******************
 //
 // License (GPLv3)
 //
 // This file is part of scls_documentalist_test.
-// 
+//
 // scls_documentalist_test is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-// 
+//
 // scls_documentalist_test is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 // See the GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License along with scls_documentalist_test. If not, see <https://www.gnu.org/licenses/>.
 //
 
-//******************
-//
-// Includes
-//
-//******************
+#include "../headers/scls_documentalist_cpp_ressources.h"
 
-// scls_documentalist_cpp_ressources.h -> The ressources to clearly run SCLS Documentalist.
-#include "scls_documentalist_cpp_ressources.h"
+// Use of the "scls" namespace to be more easily usable
+namespace scls {
 
+}

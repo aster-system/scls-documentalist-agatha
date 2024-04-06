@@ -1,6 +1,6 @@
 //******************
 //
-// scls_documentalist_test -> headers/scls_documentalist_project.h
+// scls_documentalist_test -> headers/scls_documentalist_cpp_ressources.h
 //
 //******************
 //
@@ -13,9 +13,9 @@
 //
 //******************
 //
-// headers/scls_documentalist_project.h description
+// headers/scls_documentalist_cpp_ressources.h description
 //
-// This file contains the project system of SCLS Documentalist.
+// This file contains the ressources to use properly C++ with Documentalist.
 //
 //******************
 //
@@ -37,6 +37,5 @@
 //
 //******************
 
-// scls_documentalist_cpp_ressources.h -> The ressources to clearly run SCLS Documentalist.
-#include "scls_documentalist_cpp_ressources.h"
-
+// scls_foundation.h -> The foundation of the SCLS project, used in SCLS Documentalist.
+#include <scls_foundation.h>
