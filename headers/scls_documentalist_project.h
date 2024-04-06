@@ -1,10 +1,10 @@
 //******************
 //
-// SCLS Documentalist -> scls_documentalist_directory/scls_documentalist_writer.h
+// scls_documentalist_test -> headers/scls_documentalist_project.h
 //
 //******************
 //
-// SCLS Documentalist description
+// scls_documentalist_test description
 //
 // SCLS Documentalist "Agatha" is a part of the Aster System SCLS project.
 // This part is made to easily document C++ files.
@@ -13,22 +13,22 @@
 //
 //******************
 //
-// scls_documentalist_directory/scls_documentalist_writer.h description
+// headers/scls_documentalist_project.h description
 //
-// This file contains the writing system of SCLS Documentalist.
+// This file contains the project system of SCLS Documentalist.
 //
 //******************
 //
 // License (GPLv3)
 //
-// This file is part of SCLS Documentalist.
+// This file is part of scls_documentalist_test.
 //
-// SCLS Documentalist is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// scls_documentalist_test is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
-// SCLS Documentalist is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// scls_documentalist_test is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 // See the GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License along with SCLS Documentalist. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU General Public License along with scls_documentalist_test. If not, see <https://www.gnu.org/licenses/>.
 //
 
 #ifndef SCLS_DOCUMENTALIST_WRITER
@@ -110,17 +110,19 @@ namespace scls {
         std::string a_path = "";
     };
 
-    class Writer {
-        // Class representing the writer of the part, which can print an entire project
+    class Project {
+        // Class representing the entire project
     public:
-        // Most basic Writer constructor
-        Writer();
+        // Most basic Project constructor
+        Project();
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
-        inline std::string project_description() const {return a_project_description;};
-        inline std::string project_name() const {return a_project_name;};
-        inline void set_project_description(std::string new_project_description) {a_project_description = new_project_description;};
-        inline void set_project_name(std::string new_project_name) {a_project_name = new_project_name;};
+        inline std::string description() const {return a_description;};
+        inline std::string name() const {return a_name;};
+        inline std::string path() const {return a_path;};
+        inline void set_path(std::string new_path) {a_path = new_path;};
+        inline void set_project_description(std::string new_project_description) {a_description = new_project_description;};
+        inline void set_project_name(std::string new_project_name) {a_name = new_project_name;};
 
         // Create a file in the project
         File_To_Document* new_file(std::string name);
@@ -132,6 +134,11 @@ namespace scls {
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::vector<File_To_Document>& files() {return a_files;};
 
+        // Analyse the project
+        void analyse();
+        // Analyse a file of the project
+        void analyse_file(std::string path);
+
         // Save all the project in the asked path
         bool save_all(std::string path);
         // Writes and returns a file of the project
@@ -141,9 +148,11 @@ namespace scls {
         std::vector<File_To_Document> a_files = std::vector<File_To_Document>();
 
         // Description of the project
-        std::string a_project_description = "";
+        std::string a_description = "";
         // Name of the project
-        std::string a_project_name = "";
+        std::string a_name = "";
+        // Path of the project
+        std::string a_path = "";
     };
 }
 

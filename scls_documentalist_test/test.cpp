@@ -1,10 +1,10 @@
 //******************
 //
-// SCLS Documentalist -> test.cpp
+// scls_documentalist_test -> test.cpp
 //
 //******************
 //
-// SCLS Documentalist description
+// scls_documentalist_test description
 //
 // SCLS Documentalist "Agatha" is a part of the Aster System SCLS project.
 // This part is made to easily document C++ files.
@@ -23,14 +23,14 @@
 //
 // License (GPLv3)
 //
-// This file is part of SCLS Documentalist.
+// This file is part of scls_documentalist_test.
 // 
-// SCLS Documentalist is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// scls_documentalist_test is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 // 
-// SCLS Documentalist is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// scls_documentalist_test is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 // See the GNU General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License along with SCLS Documentalist. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU General Public License along with scls_documentalist_test. If not, see <https://www.gnu.org/licenses/>.
 //
 
 //******************

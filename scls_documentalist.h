@@ -36,6 +36,6 @@
 #ifndef SCLS_DOCUMENTALIST
 #define SCLS_DOCUMENTALIST
 
-#include "headers/scls_documentalist_writer.h"
+#include "headers/scls_documentalist_project.h"
 
 #endif // SCLS_DOCUMENTALIST
