@@ -37,25 +37,10 @@
 #include "scls_documentalist.h"
 
 int main() {
-    scls::Project project = scls::Project();
-    project.set_description("SCLS Documentalist \"Agatha\" is a part of the Aster System SCLS project.\nThis part is made to easily document C++ files.\nIt is made for SCLS, but you can still use it in your project. However, it may be a little less adapted.\nThis part is named after one of the most famous author, Agatha Christie.");
-    project.set_name("scls_documentalist_test");
+    scls::Project* project = scls::cpp_scls_format_project();
 
-    scls::File_To_Document* main_cpp = project.new_file("test.cpp");
-    main_cpp->set_description("This file represents a test of the library.\nIt also provide a way to document the library.\nIndeed, this documentation is made with SCLS Documentalist.");
-
-    scls::File_To_Document* main_header = project.new_file("scls_documentalist.h");
-    main_header->set_description("This file represents an access to the SCLS Documentalist files.\nIt include every SCLS Documentalist needed files.\nYou just have to include it in you other project to use SCLS Documentalist.");
-
-    scls::File_To_Document* project_header = project.new_file("headers/scls_documentalist_project.h");
-    project_header->set_description("This file contains the project system of SCLS Documentalist.");
-
-    scls::File_To_Document* project_cpp = project.new_file("src/scls_documentalist_project.cpp");
-
-    scls::File_To_Document* cpp_ressources_header = project.new_file("headers/scls_documentalist_cpp_ressources.h");
-    cpp_ressources_header->set_description("This file contains the ressources to use properly C++ with Documentalist.");
-
-    scls::File_To_Document* cpp_ressources_cpp = project.new_file("src/scls_documentalist_cpp_ressources.cpp");
+    project->set_description("SCLS Documentalist \"Agatha\" is a part of the Aster System SCLS project.\nThis part is made to easily document C++ files.\nIt is made for SCLS, but you can still use it in your project. However, it may be a little less adapted.\nThis part is named after one of the most famous author, Agatha Christie.");
+    project->set_name("scls_documentalist_test");
 
     // project.save_all("scls_documentalist_test");
 

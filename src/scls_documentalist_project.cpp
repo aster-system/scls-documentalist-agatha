@@ -59,6 +59,18 @@ namespace scls {
         return &(files()[files().size() - 1]);
     }
 
+    // Create a pattern in the project
+    Text_Pattern* Project::new_pattern(std::string pattern_name, std::string base_text) {
+        if(contains_pattern_by_name(pattern_name)) {
+            scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The pattern \"" + pattern_name + "\" you want to add already exist in the project.");
+            return 0;
+        }
+
+        Text_Pattern pattern(pattern_name, base_text);
+        patterns().push_back(pattern);
+        return &patterns()[patterns().size() - 1];
+    }
+
     // Save all the project in the asked path
     bool Project::save_as_aap(std::string save_path) {
         if(!std::filesystem::exists(save_path)) {
@@ -116,4 +128,5 @@ namespace scls {
 
         return true;
     }
+
 }

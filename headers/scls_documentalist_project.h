@@ -34,7 +34,7 @@
 #ifndef SCLS_DOCUMENTALIST_PROJECT
 #define SCLS_DOCUMENTALIST_PROJECT
 
-#include "scls_foundation.h"
+#include "scls_documentalist_core.h"
 
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
@@ -135,7 +135,7 @@ namespace scls {
         std::vector<std::string> final_content = std::vector<std::string>();
         for(int i = 0;i<static_cast<int>(content.size());i++) {
             std::string start_line = content[i];
-            std::string line = cut_string_out_quotes(" " + start_line, "//")[0]; line.substr(1, line.size() - 1);
+            std::string line = cut_string_out_quotes(" " + start_line, "//")[0]; line = line.substr(1, line.size() - 1);
 
             if(line != "")final_content.push_back(line);
         }
@@ -156,13 +156,18 @@ namespace scls {
 
         // Create a file in the project
         File_To_Document* new_file(std::string name);
+        // Create a pattern in the project
+        Text_Pattern* new_pattern(std::string pattern_name, std::string base_text);
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
         inline bool contains_file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i].path()) { return true; } } return false; };
+        inline bool contains_pattern_by_name(std::string pattern_name) {return pattern_by_name(pattern_name) != 0; };
         inline File_To_Document* file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i].path()) { return &files()[i]; } } return 0; };
+        inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i].name() == pattern_name) return &patterns()[i]; } return 0;};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::vector<File_To_Document>& files() {return a_files;};
+        inline std::vector<Text_Pattern>& patterns() {return a_patterns;};
 
         // Save all the project in the asked path in AAP
         bool save_as_aap(std::string path);
@@ -170,10 +175,50 @@ namespace scls {
         // Vector of all the files in the project
         std::vector<File_To_Document> a_files = std::vector<File_To_Document>();
 
+        // Datas for Agatha
+        // Each defined patterns
+        std::vector<Text_Pattern> a_patterns = std::vector<Text_Pattern>();
+
+        // Datas about the project
         // Description of the project
         std::string a_description = "";
         // Name of the project
         std::string a_name = "";
+    };
+
+    // Return a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
+    static Project* cpp_scls_format_project() {
+        Project* project = new Project();
+
+        // Create patterns
+        // Create start pattern
+        std::string start_pattern = "";
+        start_pattern += "//******************\n";
+        start_pattern += "//\n";
+        start_pattern += "// <*-project_name-*> -> <*-file_path-*>\n";
+        start_pattern += "//\n";
+        start_pattern += "//******************\n";
+        start_pattern += "//\n";
+        start_pattern += "// <*-project_name-*> description\n";
+        start_pattern += "//\n";
+        start_pattern += "// <*-project_description-*>\n";
+        start_pattern += "//\n";
+        start_pattern += "//******************\n";
+        start_pattern += "//\n";
+        start_pattern += "// <*-file_name_extension-*> description\n";
+        start_pattern += "//\n";
+        start_pattern += "// <*-file_description-*>\n";
+        start_pattern += "//\n";
+        start_pattern += "//******************\n";
+        start_pattern += "//\n";
+        start_pattern += "// License description (<*-license_name-*>)\n";
+        start_pattern += "//\n";
+        start_pattern += "// <*-license_description-*>\n";
+        start_pattern += "//\n";
+        start_pattern += "//******************";
+        project->new_pattern("start_presentation", start_pattern); start_pattern = "";
+
+        return project;
     };
 }
 
