@@ -42,7 +42,7 @@ namespace scls {
     static std::string source_cpp_description_text = "This file is the source file of *.";
 
     // Enumeration of each supported macro types
-    enum Preprocessor_Directive_Types { Define, Endif, Ifdef, Ifndef, Include, Unknow };
+    enum Preprocessor_Directive_Types { Define, Elif, Else, Endif, Error, If, Ifdef, Ifndef, Include, Pragma, Undef, Unknow };
     struct Preprocessor_Directive {
         // Struct representing datas about macros in a file
 
@@ -57,13 +57,28 @@ namespace scls {
     // Convert a std::string to a Preprocessor_Directive_Types
     inline Preprocessor_Directive_Types string_to_preprocessor_directive_type(std::string str) {
         if(str == "define") return Preprocessor_Directive_Types::Define;
+        else if(str == "elif") return Preprocessor_Directive_Types::Elif;
+        else if(str == "else") return Preprocessor_Directive_Types::Else;
         else if(str == "endif") return Preprocessor_Directive_Types::Endif;
+        else if(str == "error") return Preprocessor_Directive_Types::Error;
+        else if(str == "if") return Preprocessor_Directive_Types::If;
         else if(str == "ifdef") return Preprocessor_Directive_Types::Ifdef;
         else if(str == "ifndef") return Preprocessor_Directive_Types::Ifndef;
         else if(str == "include") return Preprocessor_Directive_Types::Include;
+        else if(str == "pragma") return Preprocessor_Directive_Types::Pragma;
+        else if(str == "undef") return Preprocessor_Directive_Types::Undef;
 
         return Preprocessor_Directive_Types::Unknow;
     }
+
+    struct Macro {
+        // Struct representing defined macro in a file
+
+        // Content of the macro
+        std::string content = "";
+        // Name of the macro
+        std::string name = "";
+    };
 
     struct Included_File {
         // Struct representing datas about included files

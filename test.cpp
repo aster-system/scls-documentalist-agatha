@@ -67,7 +67,7 @@ int main() {
     // project.save_all("scls_documentalist_test");
 
     scls::Project project_2 = scls::Project();
-    project_2.set_path("scls_documentalist_test");
+    project_2.set_path("./");
 
     project_2.analyse();
 

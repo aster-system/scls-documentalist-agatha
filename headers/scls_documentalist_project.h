@@ -113,24 +113,44 @@ namespace scls {
 
         // Create a file in the project
         File_To_Document* new_file(std::string name);
+        // Create a macro in the project
+        inline void new_macro(std::string macro_name, std::string macro_content){
+            if(contains_macro_by_name(macro_name)) {
+                print("Error", "SCLS Documentalist project \"" + name() + "\"", "The macro \"" + macro_name + "\" is already defined.");
+                return;
+            }
+            Macro macro;
+            macro.name = macro_name;
+            macro.content = macro_content;
+            macros().push_back(macro);
+        };
+        // Remove a macro from the project
+        inline void remove_macro(std::string macro_name) {
+            for(int i = 0;i<static_cast<int>(macros().size());i++) {
+                if(macro_name == macros()[i].name) {
+                    macros().erase(macros().begin() + i, macros().begin() + i + 1);
+                    return;
+                }
+            }
+        };
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
         inline bool contains_file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i].path()) { return true; } } return false; };
+        inline bool contains_macro_by_name(std::string name) {for(int i = 0;i<static_cast<int>(macros().size());i++) if(name == macros()[i].name) { return true; } return false; };
         inline File_To_Document* file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i].path()) { return &files()[i]; } } return 0; };
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::vector<File_To_Document>& files() {return a_files;};
+        inline std::vector<Macro>& macros() {return a_macros;};
 
         // Analyse the project
         void analyse();
         // Analyse a file of the project
         bool analyse_file(std::string file_path);
         // Format a file like it was compiled soon
-        std::string format_file_as_compiler(std::string file_path);
+        std::string format_file_as_compiler(std::string file_path, bool keep_comments = true);
         // Format a file to use it from an include
         std::string format_file_to_include_in_file(std::string content_str, std::string included_path, std::string includer_path);
-        // Format a compiler file to use it from an include
-        std::string format_compiler_file_to_include_in_file(std::string content_str);
 
         // Save all the project in the asked path
         bool save_all(std::string path);
@@ -139,6 +159,8 @@ namespace scls {
     private:
         // Vector of all the files in the project
         std::vector<File_To_Document> a_files = std::vector<File_To_Document>();
+        // Vector of all the defined macro
+        std::vector<Macro> a_macros = std::vector<Macro>();
 
         // Compiler's includes path
         std::string a_compiler_includes_path = "C:\\msys64\\ucrt64\\include\\";
