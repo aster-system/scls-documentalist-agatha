@@ -33,6 +33,7 @@
 // You should have received a copy of the GNU General Public License along with SCLS Documentalist. If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include <iostream>
 #include "scls_documentalist.h"
 
 int main() {
@@ -69,7 +70,7 @@ int main() {
     scls::Project project_2 = scls::Project();
     project_2.set_path("./");
 
-    project_2.analyse();
+    project_2.analyse_source_file("test.cpp");
 
     return 0;
 }

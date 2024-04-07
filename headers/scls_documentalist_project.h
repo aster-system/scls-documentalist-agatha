@@ -96,6 +96,80 @@ namespace scls {
         std::string a_path = "";
     };
 
+    // Returns a string cutted by ignoring quote
+    static std::vector<std::string> cut_string_out_quotes(std::string string, std::string cut, bool erase_blank = false, bool erase_last_if_blank = true) {
+		bool in_quotes = false;
+		bool special_character = false;
+		std::string last_string = ""; // String since the last cut
+		std::string last_string_cut = ""; // String of the "cut" size which allows to know where to cut
+		std::vector<std::string> result = std::vector<std::string>();
+		for (int i = 0; i < static_cast<int>(string.size()); i++) // Browse the string char by char
+		{
+		    if(!in_quotes)
+            {
+                last_string_cut += string[i];
+                if (last_string_cut.size() > cut.size()) // If the string which allows to know where to cut is too long, cut him
+                {
+                    last_string_cut = last_string_cut.substr(1, cut.size());
+                }
+            }
+
+            if (last_string_cut == cut && !in_quotes) // If the string which allows to know where to cut is equal to the part to cut, do a cut
+			{
+				std::string final_string = last_string.substr(0, last_string.size() - (cut.size() - 1));
+				if (erase_blank)
+				{
+					if (final_string != "")
+					{
+						result.push_back(final_string);
+					}
+				}
+				else
+				{
+					result.push_back(final_string);
+				}
+				last_string = "";
+				last_string_cut = "";
+			}
+			else if(string[i] == '\\')
+            {
+                if(special_character) special_character = false;
+                else special_character = true;
+
+                last_string += string[i];
+            }
+			else if(string[i] == '\"' && !special_character)
+            {
+                in_quotes = !in_quotes;
+                last_string += string[i];
+                last_string_cut = "";
+            }
+			else
+			{
+				last_string += string[i];
+				special_character = false;
+			}
+		}
+
+		if (last_string.size() > 0 || !erase_last_if_blank) { result.push_back(last_string); } // Add the last non-cutted element
+		return result;
+    }
+
+    // Returns a code without any comments
+    static std::string remove_comments(std::string code) {
+
+        // Remove one lines comments
+        std::vector<std::string> content = cut_string_out_quotes(code, "\n");
+        std::vector<std::string> final_content = std::vector<std::string>();
+        for(int i = 0;i<static_cast<int>(content.size());i++) {
+            std::string start_line = content[i];
+            std::string line = cut_string_out_quotes(" " + start_line, "//")[0]; line.substr(1, line.size() - 1);
+
+            if(line != "")final_content.push_back(line);
+        }
+        return join_string(final_content, "\n");
+    };
+
     class Project {
         // Class representing the entire project
     public:
@@ -146,7 +220,7 @@ namespace scls {
         // Analyse the project
         void analyse();
         // Analyse a file of the project
-        bool analyse_file(std::string file_path);
+        bool analyse_source_file(std::string file_path);
         // Format a file like it was compiled soon
         std::string format_file_as_compiler(std::string file_path, bool keep_comments = true);
         // Format a file to use it from an include

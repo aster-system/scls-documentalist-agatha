@@ -36,25 +36,55 @@
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
-    // Format a file like it was compiled soon
-    std::string Project::format_file_as_compiler(std::string file_path, bool keep_comments) {
-        std::string parent_path = file_path.substr(0, file_path.size() - (file_name(file_path, true).size()));
+    // Most basic _File_To_Document constructor
+    File_To_Document::File_To_Document(std::string path) : a_path(path) {
+
+    }
+
+    // Most basic Project constructor
+    Project::Project() {
+
+    }
+
+    // Create a file in the project
+    File_To_Document* Project::new_file(std::string file_name) {
+        if(contains_file_by_path(file_name)) {
+            scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The file \"" + file_name + "\" you want to add already exist in the project.");
+            return 0;
+        }
+
+        File_To_Document file(file_name);
+        files().push_back(file);
+
+        return &(files()[files().size() - 1]);
+    }
+
+    // Analyse the project
+    void Project::analyse() {
+        // Check the asserts
+        if(!std::filesystem::exists(path())) {
+            print("Warning", "SCLS Documentalist Project", "The project \"" + path() + "\" you want to read does not exist.");
+            return;
+        }
+        if(!std::filesystem::is_directory(path())) {
+            print("Warning", "SCLS Documentalist Project", "The project \"" + path() + "\" you want to read is not a directory.");
+            return;
+        }
+
+        // Get each files
+        std::vector<std::string> sub_files = directory_content(path(), true);
+    }
+
+    // Analyse a file of the project
+    bool Project::analyse_source_file(std::string file_path) {
         std::string content_str = read_file(file_path);
         std::vector<std::string> content = cut_string(content_str, "\n", true, true);
-        std::vector<std::string> final_content = std::vector<std::string>();
-
-        std::cout << "A " << file_path << std::endl;
-
-        // If preprocessor ask to block a part
-        unsigned int preprocessor_block = 0;
 
         for(int i = 0;i<static_cast<int>(content.size());i++) {
             std::string line = content[i];
 
             // Ignore the comments and the empty lines
             line = remove_first_and_last_space(line);
-            std::vector<std::string> cutted_line = cut_string(line, "//");
-            if(cutted_line.size() > 0)line = cutted_line[0]; else line = "";
             if(line.size() <= 0 || line == "") { continue; }
 
             // Check if its a preprocessing directive
@@ -68,91 +98,118 @@ namespace scls {
                 // Get the type
                 std::string type_str = line.substr(0, pos);
                 Preprocessor_Directive_Types type = string_to_preprocessor_directive_type(type_str);
-                if(preprocessor_block > 0) { // If preprocessor ask for a block
-                    if(type == Preprocessor_Directive_Types::Endif) { // Stop the block
-                        preprocessor_block--; continue;
-                    } else if(type == Preprocessor_Directive_Types::Ifndef || type == Preprocessor_Directive_Types::Ifdef || type == Preprocessor_Directive_Types::If) { // If a ifndef contion happend
-                        preprocessor_block++; continue;
-                    }
-                } else {
-                    if(type == Preprocessor_Directive_Types::Unknow) {
-                        print("Error", "SCLS Documentalist file \"" + file_path + "\"", "The preprocessing directive \"" + type_str + "\" is unknow at line " + std::to_string(i + 1) + ".");
-                        return "";
-                    } else if(type == Preprocessor_Directive_Types::Define) { // If a macro is defined
-                        line = remove_first_and_last_space(line.substr(6, line.size() - 6));
-                        std::string macro_name = cut_string(line, " ")[0];
-                        std::string macro_content = remove_first_and_last_space(line.substr(macro_name.size(), line.size() - macro_name.size()));
+                if(type == Preprocessor_Directive_Types::Unknow) {
+                    print("Error", "SCLS Documentalist file \"" + file_path + "\"", "The preprocessing directive \"" + type_str + "\" is unknow at line " + std::to_string(i + 1) + ".");
+                    return "";
+                }
+                else if(type == Preprocessor_Directive_Types::Include) {
+                    // If a file is included
+                    std::string included = remove_first_and_last_space(line.substr(type_str.size() + offset, line.size() - (type_str.size() + offset)));
+                    bool is_system = true;
 
-                        if(contains_macro_by_name(macro_name)) {
-                            print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The macro \"" + macro_name + "\" already exist at line " + std::to_string(i + 1) + ".");
+                    // Format the included file
+                    if(included[0] == '\"' && included[included.size() - 1] == '\"') {
+                        is_system = false;
+                    }
+                    else if(included[0] == '<' && included[included.size() - 1] == '>') {
+                        is_system = true;
+                    }
+                    else {
+                        print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The included file \"" + included + "\" is badly syntaxed at line " + std::to_string(i + 1) + ".");
+                        return "";
+                    }
+                    included = included.substr(1, included.size() - 2);
+
+                    std::cout << "Q " << included << " " << is_system << std::endl;
+                }
+                line = base_line;
+            }
+        }
+
+        return true;
+    }
+
+    // Format a file like it was compiled soon
+    std::string Project::format_file_as_compiler(std::string file_path, bool keep_comments) {
+        std::string parent_path = file_path.substr(0, file_path.size() - (file_name(file_path, true).size()));
+        std::string content_str = remove_comments(read_file(file_path));
+        std::vector<std::string> content = cut_string(content_str, "\n", true, true);
+        std::vector<std::string> final_content = std::vector<std::string>();
+
+        // If preprocessor ask to block a part
+        unsigned int preprocessor_block = 0;
+
+        for(int i = 0;i<static_cast<int>(content.size());i++) {
+            std::string line = content[i];
+
+            // Ignore the comments and the empty lines
+            line = remove_first_and_last_space(line);
+            if(line.size() <= 0 || line == "") { continue; }
+
+            // Check if its a preprocessing directive
+            if(line[0] == '#') {
+                const std::string base_line = line;
+                line = remove_first_and_last_space(line.substr(1, line.size() - 1));
+
+                int pos = 0; while(line[pos]!=' '&&line[pos]!='\"'&&line[pos]!='<')pos++;
+                int offset = 0; while(line[pos + offset]==' ') offset++;
+
+                // Get the type
+                std::string type_str = line.substr(0, pos);
+                Preprocessor_Directive_Types type = string_to_preprocessor_directive_type(type_str);
+                if(type == Preprocessor_Directive_Types::Unknow) {
+                    print("Error", "SCLS Documentalist file \"" + file_path + "\"", "The preprocessing directive \"" + type_str + "\" is unknow at line " + std::to_string(i + 1) + ".");
+                    return "";
+                }
+                else if(type == Preprocessor_Directive_Types::Include) { // If a file is included
+                    std::string included = remove_first_and_last_space(line.substr(type_str.size() + offset, line.size() - (type_str.size() + offset)));
+                    // Local file
+                    std::string content_str = "";
+
+                    // Format the included file
+                    if(included[0] == '\"' && included[included.size() - 1] == '\"') {
+                        included = format_path(included.substr(1, included.size() - 2));
+                        if(!std::filesystem::exists(included)) included = format_path(parent_path + included);
+                        if(!std::filesystem::exists(included)) {
+                            print("Error", "SCLS Documentalist project file \"" + file_path + "\"", "The included file \"" + included + "\" does not exist at line " + std::to_string(i + 1) + ".");
                             return "";
                         }
-                        new_macro(macro_name, macro_content);
-                    } else if(type == Preprocessor_Directive_Types::Ifndef) { // If a ifndef contion happend
-                        line = remove_first_and_last_space(line.substr(6, line.size() - 6));
-                        std::string macro_name = cut_string(line, " ")[0];
-
-                        if(contains_macro_by_name(macro_name)) {
-                            preprocessor_block++;
-                        }
+                        content_str = format_file_as_compiler(included, false);
                     }
-                    else if(type == Preprocessor_Directive_Types::Include) { // If a file is included
-                        std::string included = remove_first_and_last_space(line.substr(type_str.size() + offset, line.size() - (type_str.size() + offset)));
-                        // Local file
-                        std::string content_str = "";
-
-                        // Format the included file
-                        if(included[0] == '\"' && included[included.size() - 1] == '\"') {
-                            included = format_path(included.substr(1, included.size() - 2));
-                            if(!std::filesystem::exists(included)) included = format_path(parent_path + included);
-                            if(!std::filesystem::exists(included)) {
-                                print("Error", "SCLS Documentalist project file \"" + file_path + "\"", "The included file \"" + included + "\" does not exist at line " + std::to_string(i + 1) + ".");
-                                return "";
-                            }
-                            content_str = format_file_as_compiler(included, false);
-                        }
-                        else if(included[0] == '<' && included[included.size() - 1] == '>') { continue;
-                            included = included.substr(1, included.size() - 2);
-                            std::string full_included = included; if(!contains(included, ".")) full_included += ".h";
-                            if(std::filesystem::exists(compiler_includes_path() + full_included)) {
-                                    included = compiler_includes_path() + full_included;
-                            }
-                            else {
-                                included = compiler_includes_path() + "c++\\13.1.0\\" + included;
-                            }
-                            content_str = format_file_as_compiler(included, false);
+                    else if(included[0] == '<' && included[included.size() - 1] == '>') { continue;
+                        included = included.substr(1, included.size() - 2);
+                        std::string full_included = included; if(!contains(included, ".")) full_included += ".h";
+                        if(std::filesystem::exists(compiler_includes_path() + full_included)) {
+                                included = compiler_includes_path() + full_included;
                         }
                         else {
-                            print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The included file \"" + included + "\" is badly syntaxed at line " + std::to_string(i + 1) + ".");
-                            return "";
+                            included = compiler_includes_path() + "c++\\13.1.0\\" + included;
                         }
-
-                        std::vector<std::string> cutted_content = cut_string(content_str, "\n");
-                        std::vector<std::string> final_lines = std::vector<std::string>();
-                        for(int j = 0;j<i;j++) {
-                            final_lines.push_back(content[j]);
-                        }
-                        for(int j = 0;j<static_cast<int>(cutted_content.size());j++) {
-                            final_lines.push_back(cutted_content[j]);
-                        }
-                        for(int j = i + 1;j<(static_cast<int>(content.size()));j++) {
-                            final_lines.push_back(content[j]);
-                        }
-                        content.clear();
-                        content = final_lines;
-                        final_content.clear();
-                        i = -1;
-                        macros().clear();
-                        preprocessor_block = 0;
-                        continue;
-                    } else if(type == Preprocessor_Directive_Types::Undef) { // If a macro is undefined
-                        line = remove_first_and_last_space(line.substr(6, line.size() - 6));
-                        std::string macro_name = cut_string(line, " ")[0];
-
-                        if(contains_macro_by_name(macro_name)) {
-                            remove_macro(macro_name);
-                        }
+                        content_str = format_file_as_compiler(included, false);
                     }
+                    else {
+                        print("Error", "SCLS Documentalist project \"" + name() + "\" file \"" + file_path + "\"", "The included file \"" + included + "\" is badly syntaxed at line " + std::to_string(i + 1) + ".");
+                        return "";
+                    }
+
+                    std::vector<std::string> cutted_content = cut_string(content_str, "\n");
+                    std::vector<std::string> final_lines = std::vector<std::string>();
+                    for(int j = 0;j<i;j++) {
+                        final_lines.push_back(content[j]);
+                    }
+                    for(int j = 0;j<static_cast<int>(cutted_content.size());j++) {
+                        final_lines.push_back(cutted_content[j]);
+                    }
+                    for(int j = i + 1;j<(static_cast<int>(content.size()));j++) {
+                        final_lines.push_back(content[j]);
+                    }
+                    content.clear();
+                    content = final_lines;
+                    final_content.clear();
+                    i = -1;
+                    macros().clear();
+                    preprocessor_block = 0;
+                    continue;
                 }
                 line = base_line;
             }
@@ -204,70 +261,6 @@ namespace scls {
             final_content.push_back(line);
         }
         return join_string(final_content, "\n");
-    }
-
-    // Most basic _File_To_Document constructor
-    File_To_Document::File_To_Document(std::string path) : a_path(path) {
-
-    }
-
-    // Most basic Project constructor
-    Project::Project() {
-
-    }
-
-    // Create a file in the project
-    File_To_Document* Project::new_file(std::string file_name) {
-        if(contains_file_by_path(file_name)) {
-            scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The file \"" + file_name + "\" you want to add already exist in the project.");
-            return 0;
-        }
-
-        File_To_Document file(file_name);
-        files().push_back(file);
-
-        return &(files()[files().size() - 1]);
-    }
-
-    // Analyse the project
-    void Project::analyse() {
-        // Check the asserts
-        if(!std::filesystem::exists(path())) {
-            print("Warning", "SCLS Documentalist Project", "The project \"" + path() + "\" you want to read does not exist.");
-            return;
-        }
-        if(!std::filesystem::is_directory(path())) {
-            print("Warning", "SCLS Documentalist Project", "The project \"" + path() + "\" you want to read is not a directory.");
-            return;
-        }
-
-        // Get each source files
-        std::vector<std::string> src_files = std::vector<std::string>();
-        std::vector<std::string> sub_files = directory_content(path(), true);
-        for(int i = 0;i<static_cast<int>(sub_files.size());i++) {
-            if(file_extension(sub_files[i]) == "cpp") {
-                src_files.push_back(sub_files[i]);
-            }
-        }
-
-        for(int i = 0;i<static_cast<int>(src_files.size());i++) {
-            bool result = analyse_file(src_files[i]);
-            if(!result) {
-                print("Error", "SCLS Documentalist project \"" + name() + "\"", "The analyse has failed.");
-                return;
-            }
-        }
-    }
-
-    // Analyse a file of the project
-    bool Project::analyse_file(std::string file_path) {
-        macros().clear();
-        std::string final_content = format_file_as_compiler(file_path);
-
-        std::cout << "J " << file_path << " " << final_content.size() << std::endl;
-        std::cout << final_content << std::endl;
-
-        return true;
     }
 
     // Save all the project in the asked path
