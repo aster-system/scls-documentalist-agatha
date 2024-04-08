@@ -68,65 +68,6 @@ namespace scls {
         std::string a_path = "";
     };
 
-    // Returns a string cutted by ignoring quote
-    static std::vector<std::string> cut_string_out_quotes(std::string string, std::string cut, bool erase_blank = false, bool erase_last_if_blank = true) {
-		bool in_quotes = false;
-		bool special_character = false;
-		std::string last_string = ""; // String since the last cut
-		std::string last_string_cut = ""; // String of the "cut" size which allows to know where to cut
-		std::vector<std::string> result = std::vector<std::string>();
-		for (int i = 0; i < static_cast<int>(string.size()); i++) // Browse the string char by char
-		{
-		    if(!in_quotes)
-            {
-                last_string_cut += string[i];
-                if (last_string_cut.size() > cut.size()) // If the string which allows to know where to cut is too long, cut him
-                {
-                    last_string_cut = last_string_cut.substr(1, cut.size());
-                }
-            }
-
-            if (last_string_cut == cut && !in_quotes) // If the string which allows to know where to cut is equal to the part to cut, do a cut
-			{
-				std::string final_string = last_string.substr(0, last_string.size() - (cut.size() - 1));
-				if (erase_blank)
-				{
-					if (final_string != "")
-					{
-						result.push_back(final_string);
-					}
-				}
-				else
-				{
-					result.push_back(final_string);
-				}
-				last_string = "";
-				last_string_cut = "";
-			}
-			else if(string[i] == '\\')
-            {
-                if(special_character) special_character = false;
-                else special_character = true;
-
-                last_string += string[i];
-            }
-			else if(string[i] == '\"' && !special_character)
-            {
-                in_quotes = !in_quotes;
-                last_string += string[i];
-                last_string_cut = "";
-            }
-			else
-			{
-				last_string += string[i];
-				special_character = false;
-			}
-		}
-
-		if (last_string.size() > 0 || !erase_last_if_blank) { result.push_back(last_string); } // Add the last non-cutted element
-		return result;
-    }
-
     // Returns a code without any comments
     static std::string remove_comments(std::string code) {
 
@@ -186,40 +127,8 @@ namespace scls {
         std::string a_name = "";
     };
 
-    // Return a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
-    static Project* cpp_scls_format_project() {
-        Project* project = new Project();
-
-        // Create patterns
-        // Create start pattern
-        std::string start_pattern = "";
-        start_pattern += "//******************\n";
-        start_pattern += "//\n";
-        start_pattern += "// <*-project_name-*> -> <*-file_path-*>\n";
-        start_pattern += "//\n";
-        start_pattern += "//******************\n";
-        start_pattern += "//\n";
-        start_pattern += "// <*-project_name-*> description\n";
-        start_pattern += "//\n";
-        start_pattern += "// <*-project_description-*>\n";
-        start_pattern += "//\n";
-        start_pattern += "//******************\n";
-        start_pattern += "//\n";
-        start_pattern += "// <*-file_name_extension-*> description\n";
-        start_pattern += "//\n";
-        start_pattern += "// <*-file_description-*>\n";
-        start_pattern += "//\n";
-        start_pattern += "//******************\n";
-        start_pattern += "//\n";
-        start_pattern += "// License description (<*-license_name-*>)\n";
-        start_pattern += "//\n";
-        start_pattern += "// <*-license_description-*>\n";
-        start_pattern += "//\n";
-        start_pattern += "//******************";
-        project->new_pattern("start_presentation", start_pattern); start_pattern = "";
-
-        return project;
-    };
+    // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
+    Project* cpp_scls_format_project();
 }
 
 #endif // SCLS_DOCUMENTALIST_PROJECT
