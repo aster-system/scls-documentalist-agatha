@@ -111,6 +111,7 @@ namespace scls {
         }
 
         Text_Pattern* pattern = new Text_Pattern(pattern_name, base_text, this);
+        pattern->set_default_line_start(default_line_start());
         return pattern;
     }
 
@@ -145,6 +146,11 @@ namespace scls {
                 Text_Pattern_Variable variable;
                 variable.line_start = default_line_start();
                 variable.name = variable_name;
+
+                if(contains_global_variable(variable_name)) {
+                    variable.content = global_variable(variable_name);
+                }
+
                 to_return.push_back(variable);
             }
         }
@@ -158,6 +164,11 @@ namespace scls {
                     Text_Pattern_Variable variable;
                     variable.line_start = children_variables[i].line_start;
                     variable.name = children_variables[i].name;
+
+                    if(contains_global_variable(children_variables[i].name)) {
+                        variable.content = global_variable(children_variables[i].name);
+                    }
+
                     to_return.push_back(variable);
                 }
             }
@@ -175,30 +186,36 @@ namespace scls {
     }
 
     // Most basic Text_Piece constructor
-    Text_Piece::Text_Piece(Text_Pattern& pattern, Text_Piece* parent): a_parent(parent), a_pattern(pattern) {
-        if(parent == 0) {
-            a_variables = new std::vector<Text_Pattern_Variable>();
-            std::vector<Text_Pattern_Variable> pattern_variable = pattern.needed_variables();
-            for(int i = 0;i<static_cast<int>(pattern_variable.size());i++) {
-                a_variables->push_back(pattern_variable[i]);
-            }
+    Text_Piece::Text_Piece(std::string name, Text_Pattern& pattern): a_name(name), a_pattern(pattern) {
+        a_variables = new std::vector<Text_Pattern_Variable>();
+        std::vector<Text_Pattern_Variable> pattern_variable = pattern.needed_variables();
+        for(int i = 0;i<static_cast<int>(pattern_variable.size());i++) {
+            a_variables->push_back(pattern_variable[i]);
         }
     }
 
-    // Return the text well formatted
-    std::string Text_Piece::text() {
+    // Save the text in a file
+    void Text_Piece::save_as(std::string path) {
+        std::filesystem::path save_path = std::filesystem::path(path);
+
+        if(save_path.parent_path() != "" && !std::filesystem::exists(save_path.parent_path())) {
+            print("Warning", "SCLS Documentalist Text Piece", "The text piece \"" + name() + "\" you want to save at the path \"" + path + "\" can't access to the path.");
+            return;
+        }
+
+        write_in_file(path, text());
+    }
+
+    // Return the text "text_to_format" well formatted
+    std::string Text_Piece::text(std::string text_to_format) {
         std::string to_return = "";
-        std::string unformatted = pattern().text();
-
-        if(!contains(unformatted, VARIABLE_START)) return unformatted;
-
-        std::vector<std::string> cutted = cut_string_out_quotes(unformatted, VARIABLE_START);
+        std::vector<std::string> cutted = cut_string_out_quotes(text_to_format, VARIABLE_START);
         to_return += cutted[0];
         for(int i = 1;i<static_cast<int>(cutted.size());i++) {
             std::vector<std::string> local_cutted = cut_string_out_quotes(cutted[i], VARIABLE_END);
             if(local_cutted.size() < 2) {
-                print("Warning", "SCLS Documentalist Text Piece", "The text piece where you want to get the text is badly syntaxed.");
-                return unformatted;
+                print("Warning", "SCLS Documentalist Text Piece", "The text piece \"" + name() + "\" where you want to get the text is badly syntaxed.");
+                return text_to_format;
             }
 
             std::string variable_name = local_cutted[0];
@@ -210,12 +227,22 @@ namespace scls {
             to_return += local_cutted[1];
         }
 
-        return to_return;
+        if(!contains(to_return, VARIABLE_START)) return to_return;
+        return text(to_return);
+    }
+
+    // Return the text well formatted
+    std::string Text_Piece::text() {
+        std::string to_return = "";
+        std::string unformatted = pattern().text();
+
+        if(!contains(unformatted, VARIABLE_START)) return unformatted;
+        return text(unformatted);
     }
 
     // Text_Piece destructor
     Text_Piece::~Text_Piece() {
-        if(parent() == 0 && a_variables != 0) {
+        if(a_variables != 0) {
             delete a_variables; a_variables = 0;
         }
     }

@@ -36,6 +36,24 @@
 
 #include "scls_documentalist_core.h"
 
+// Define some stuff in a project
+// Define the name of the variable of the description of a licence
+#ifndef SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE
+#define SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE "licence_description"
+#endif // SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE
+// Define the name of the variable of the name of a licence
+#ifndef SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE
+#define SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE "licence_name"
+#endif // SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE
+// Define the name of the variable of the description of a project
+#ifndef SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE
+#define SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE "project_description"
+#endif // SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE
+// Define the name of the variable of the name of a project
+#ifndef SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE
+#define SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE "project_name"
+#endif // SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE
+
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
@@ -46,26 +64,6 @@ namespace scls {
         std::string name = "GPLv3";
         // Notice of the license
         std::string notice = "This file is part of *.\n\n* is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n* is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\nSee the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with *. If not, see <https://www.gnu.org/licenses/>.";
-    };
-
-    class File_To_Document {
-        // File representing a file to document
-    public:
-        // Most basic _File_To_Document constructor
-        File_To_Document(std::string path);
-
-        // Getters and setters (ONLY WITHOUT ATTRIBUTES)
-        inline bool is_header() const {std::string ext = file_extension(path());return ext == "h" || ext == "hpp";};
-
-        // Getters and setters (ONLY WITH ATTRIBUTES)
-        inline std::string description() const {return a_description;};
-        inline std::string path() const {return a_path;};
-        inline void set_description(std::string new_description) {a_description = new_description;};
-    private:
-        // Description of the file
-        std::string a_description = "";
-        // Path of the file
-        std::string a_path = "";
     };
 
     // Returns a code without any comments
@@ -88,6 +86,11 @@ namespace scls {
     public:
         // Most basic Project constructor
         Project();
+        // Project destructor
+        ~Project();
+
+        // Save the project
+        bool save_formatted_as(std::string path);
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string description() const {return a_description;};
@@ -96,27 +99,35 @@ namespace scls {
         inline void set_name(std::string new_project_name) {a_name = new_project_name;};
 
         // Create a file in the project
-        File_To_Document* new_file(std::string name);
+        Text_Piece* new_file(std::string name, std::string pattern_name = "file");
         // Create a pattern in the project
         Text_Pattern* new_pattern(std::string pattern_name, std::string base_text);
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
-        inline bool contains_file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i].path()) { return true; } } return false; };
+        inline bool contains_file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i]->name()) { return true; } } return false; };
+        inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != "";};
         inline bool contains_pattern_by_name(std::string pattern_name) {return pattern_by_name(pattern_name) != 0; };
-        inline File_To_Document* file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i].path()) { return &files()[i]; } } return 0; };
+        inline Text_Piece* file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i]->name()) { return files()[i]; } } return 0; };
+        inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
         inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i].name() == pattern_name) return &patterns()[i]; } return 0;};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
-        inline std::vector<File_To_Document>& files() {return a_files;};
+        inline std::vector<Text_Piece*>& files() {return a_files;};
+        inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
         inline std::vector<Text_Pattern>& patterns() {return a_patterns;};
-
-        // Save all the project in the asked path in AAP
-        bool save_as_aap(std::string path);
+        inline void set_global_variable(std::string variable_name, std::string variable_content) {
+            a_global_variables[variable_name] = variable_content;
+            for(int i = 0;i<static_cast<int>(patterns().size());i++) {
+                patterns()[i].set_global_variable(variable_name, variable_content);
+            }
+        };
     private:
         // Vector of all the files in the project
-        std::vector<File_To_Document> a_files = std::vector<File_To_Document>();
+        std::vector<Text_Piece*> a_files = std::vector<Text_Piece*>();
 
         // Datas for Agatha
+        // Value of each defined global variables
+        std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
         // Each defined patterns
         std::vector<Text_Pattern> a_patterns = std::vector<Text_Pattern>();
 

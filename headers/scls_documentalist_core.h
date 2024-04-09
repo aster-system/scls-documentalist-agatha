@@ -93,6 +93,8 @@ namespace scls {
             }
             return false;
         };
+        inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != "";};
+        inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
         std::vector<Text_Pattern_Variable> needed_variables();
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
@@ -100,6 +102,7 @@ namespace scls {
         inline std::string children_separation() const {return a_children_separation;};
         inline std::string default_line_start() const {return a_default_line_start;};
         inline std::string end_separation() const {return a_end_separation;};
+        inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
         inline std::string name() const {return a_name;};
         inline void set_children_separation(std::string new_children_separation) {a_children_separation = new_children_separation;};
         inline void set_default_line_start(std::string new_default_line_start) {
@@ -107,6 +110,7 @@ namespace scls {
             for(int i = 0;i<static_cast<int>(a_children.size());i++) a_children[i]->set_default_line_start(new_default_line_start);
         };
         inline void set_end_separation(std::string new_end_separation) {a_end_separation = new_end_separation;};
+        inline void set_global_variable(std::string variable_name, std::string variable_content) { a_global_variables[variable_name] = variable_content; };
         inline void set_start_separation(std::string new_start_separation) {a_start_separation = new_start_separation;};
         inline std::string start_separation() const {return a_start_separation;};
         inline unsigned int text_position() const {return a_text_position;};
@@ -121,6 +125,8 @@ namespace scls {
         std::string a_default_line_start = "";
         // String of the separation at the end of the pattern
         std::string a_end_separation = "";
+        // Value of each defined global variables
+        std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
         // Name of the pattern
         std::string a_name = "";
         // Parent of this piece
@@ -135,10 +141,15 @@ namespace scls {
         // Class representing a text of pieces in a SCLS Documentalist project
     public:
         // Most basic Text_Piece constructor
-        Text_Piece(Text_Pattern& pattern, Text_Piece* parent = 0);
+        Text_Piece(std::string name, Text_Pattern& pattern);
         // Text_Piece destructor
         virtual ~Text_Piece();
 
+        // Save the text in a file
+        void save_as(std::string path);
+
+        // Return the text "text_to_format" well formatted
+        std::string text(std::string text_to_format);
         // Return the text well formatted
         std::string text();
 
@@ -155,7 +166,7 @@ namespace scls {
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::map<std::string, Text_Piece*>& children() {return a_children;};
-        inline Text_Piece* parent() {return a_parent;};
+        inline std::string name() const {return a_name;};
         inline Text_Pattern& pattern() const {return a_pattern;};
         inline Text_Pattern_Variable* variable(std::string variable_name) {
             for(int i = 0;i<static_cast<int>(variables().size());i++) {
@@ -169,8 +180,8 @@ namespace scls {
     private:
         // Children of this text
         std::map<std::string, Text_Piece*> a_children = std::map<std::string, Text_Piece*>();
-        // Parent of this piece
-        Text_Piece* const a_parent;
+        // Name of the text piece
+        std::string a_name = "";
         // Pattern linked to the text
         Text_Pattern& a_pattern;
         // Variable in the piece
