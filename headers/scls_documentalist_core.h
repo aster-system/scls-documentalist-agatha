@@ -48,7 +48,7 @@ namespace scls {
     struct Text_Pattern_Variable {
         // Struct representing a variable in a text pattern
         // Content if the variable
-        std::string content = "";
+        std::vector<std::string> content = std::vector<std::string>();
         // Start of a line if a break of line occurs
         std::string line_start = "";
         // Name of the variable
@@ -72,7 +72,7 @@ namespace scls {
         ~Text_Pattern();
 
         // Return the entire text of the pattern
-        std::string text() const;
+        std::string text(unsigned int id) const;
         // Create a new children to the pattern
         Text_Pattern* new_pattern(std::string name, std::string base_text);
 
@@ -81,6 +81,17 @@ namespace scls {
             if(!contains_children_by_name(child->name())) { a_children.push_back(child); return; }
             print("Warning", "SCLS Documentalist Text Pattern", "The text pattern \"" + name() + "\" where you want to add the child \"" + child->name() + "\" already has that child.");
         };
+        inline Text_Pattern* child(std::string pattern_name) {
+            for(int i = 0;i<static_cast<int>(a_children.size());i++) {
+                if(a_children[i]->name() == pattern_name) return a_children[i];
+            }
+
+            for(int i = 0;i<static_cast<int>(a_children.size());i++) {
+                Text_Pattern* result = a_children[i]->child(pattern_name);
+                if(result != 0) return result;
+            }
+            return 0;
+        }
         inline bool contains_children(Text_Pattern* child) {
             for(int i = 0;i<static_cast<int>(a_children.size());i++) {
                 if(a_children[i] == child) return true;
@@ -94,8 +105,11 @@ namespace scls {
             return false;
         };
         inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != "";};
+        inline bool contains_registered_id(unsigned int id) {for(std::map<unsigned int, unsigned int>::iterator it = a_iterations.begin();it!=a_iterations.end();it++){if(it->first == id){return true;}}return false;};
         inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
+        inline unsigned int iteration_number(unsigned int id) {for(std::map<unsigned int, unsigned int>::iterator it = a_iterations.begin();it!=a_iterations.end();it++){if(it->first == id){return it->second;}}return 1;};
         std::vector<Text_Pattern_Variable> needed_variables();
+        inline void set_iteration_number(unsigned int id, unsigned int number) {a_iterations[id] = number;};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string base_text() const {return a_base_text;};
@@ -127,6 +141,8 @@ namespace scls {
         std::string a_end_separation = "";
         // Value of each defined global variables
         std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
+        // Number of iteration of the pattern in the text by Piece id
+        std::map<unsigned int, unsigned int> a_iterations = std::map<unsigned int, unsigned int>();
         // Name of the pattern
         std::string a_name = "";
         // Parent of this piece
@@ -155,19 +171,23 @@ namespace scls {
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
         inline bool contains_variable_by_name(std::string variable_name) { return _contains_pattern_variable_by_name(*a_variables, variable_name);};
+        inline Text_Pattern& pattern(std::string pattern_name) {if(a_pattern.name() == pattern_name)return a_pattern; return *a_pattern.child(pattern_name);};
         inline void set_variable(std::string variable_name, std::string content) {
             if(!contains_variable_by_name(variable_name)) {
                 print("Warning", "SCLS Documentalist Text Piece", "The text piece where you want to set a variable \"" + variable_name + "\" does not have the variable.");
                 return;
             }
 
-            variable(variable_name)->content = content;
+            std::vector<std::string> final_content = std::vector<std::string>();
+            final_content.push_back(content);
+            variable(variable_name)->content = final_content;
         };
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::map<std::string, Text_Piece*>& children() {return a_children;};
+        inline unsigned int id() {return a_id;};
         inline std::string name() const {return a_name;};
-        inline Text_Pattern& pattern() const {return a_pattern;};
+        inline Text_Pattern& pattern() {return a_pattern;};
         inline Text_Pattern_Variable* variable(std::string variable_name) {
             for(int i = 0;i<static_cast<int>(variables().size());i++) {
                 if(variables()[i].name == variable_name) return &variables()[i];
@@ -180,6 +200,8 @@ namespace scls {
     private:
         // Children of this text
         std::map<std::string, Text_Piece*> a_children = std::map<std::string, Text_Piece*>();
+        // ID of the piece
+        const unsigned int a_id = 0;
         // Name of the text piece
         std::string a_name = "";
         // Pattern linked to the text

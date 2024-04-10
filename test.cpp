@@ -63,6 +63,7 @@ int main() {
     project_h->set_variable("file_path", "headers/scls_documentalist_project.h");
 
     scls::Text_Piece* base_h = project->new_file("scls_documentalist.h");
+    base_h->pattern("include").set_iteration_number(base_h->id(), 5);
     base_h->set_variable("file_description", "This file includes each needed files in SCLS Documentalist.");
     base_h->set_variable("file_name_extension", "scls_documentalist.h");
     base_h->set_variable("file_path", "scls_documentalist.h");

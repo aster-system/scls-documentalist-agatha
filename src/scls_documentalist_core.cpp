@@ -39,6 +39,9 @@
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
+    // Number of the pieces created
+    static unsigned int _piece_number;
+
     // Returns a string cutted by ignoring quote
     std::vector<std::string> cut_string_out_quotes(std::string string, std::string cut, bool erase_blank, bool erase_last_if_blank) {
 		bool in_quotes = false;
@@ -116,7 +119,7 @@ namespace scls {
     }
 
     // Return the entire text of the pattern
-    std::string Text_Pattern::text() const {
+    std::string Text_Pattern::text(unsigned int id) const {
         std::string to_return = "";
 
         to_return += start_separation();
@@ -125,9 +128,11 @@ namespace scls {
         for(unsigned int i = 0;i<static_cast<unsigned int>(a_children.size());i++) {
             Text_Pattern* child = a_children[i];
 
-            to_return += child->text();
-            if(i != a_children.size() - 1) to_return += children_separation();
-            if(i + 1 == text_position()) to_return += base_text();
+            for(int j = 0;j<static_cast<int>(child->iteration_number(id));j++) {
+                to_return += child->text(id);
+                if(i != a_children.size() - 1) to_return += children_separation();
+                if(i + 1 == text_position()) to_return += base_text();
+            }
         }
         to_return += end_separation();
 
@@ -148,7 +153,7 @@ namespace scls {
                 variable.name = variable_name;
 
                 if(contains_global_variable(variable_name)) {
-                    variable.content = global_variable(variable_name);
+                    // variable.content = global_variable(variable_name);
                 }
 
                 to_return.push_back(variable);
@@ -166,7 +171,7 @@ namespace scls {
                     variable.name = children_variables[i].name;
 
                     if(contains_global_variable(children_variables[i].name)) {
-                        variable.content = global_variable(children_variables[i].name);
+                        //variable.content = global_variable(children_variables[i].name);
                     }
 
                     to_return.push_back(variable);
@@ -186,12 +191,14 @@ namespace scls {
     }
 
     // Most basic Text_Piece constructor
-    Text_Piece::Text_Piece(std::string name, Text_Pattern& pattern): a_name(name), a_pattern(pattern) {
+    Text_Piece::Text_Piece(std::string name, Text_Pattern& pattern): a_id(_piece_number), a_name(name), a_pattern(pattern) {
         a_variables = new std::vector<Text_Pattern_Variable>();
         std::vector<Text_Pattern_Variable> pattern_variable = pattern.needed_variables();
         for(int i = 0;i<static_cast<int>(pattern_variable.size());i++) {
             a_variables->push_back(pattern_variable[i]);
         }
+
+        _piece_number++;
     }
 
     // Save the text in a file
@@ -220,7 +227,7 @@ namespace scls {
 
             std::string variable_name = local_cutted[0];
             Text_Pattern_Variable* pattern_variable = variable(variable_name);
-            variable_name = pattern_variable->content;
+            if(pattern_variable->content.size() > 0)variable_name = pattern_variable->content[0];
             if(pattern_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + pattern_variable->line_start);
 
             to_return += variable_name;
@@ -234,7 +241,7 @@ namespace scls {
     // Return the text well formatted
     std::string Text_Piece::text() {
         std::string to_return = "";
-        std::string unformatted = pattern().text();
+        std::string unformatted = pattern().text(id());
 
         if(!contains(unformatted, VARIABLE_START)) return unformatted;
         return text(unformatted);

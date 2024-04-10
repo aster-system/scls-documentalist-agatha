@@ -130,44 +130,65 @@ namespace scls {
 
         // Create patterns
         // Create start pattern
-        std::string big_separation_pattern = "////////////////////////////\n";
+        std::string big_separation_pattern = "\n\n////////////////////////////////////////////////////////\n//****************************************************//\n////////////////////////////////////////////////////////\n\n\n";
+        std::string external_separation_pattern = "////////////////////////////\n";
         std::string separation_pattern = "//******************\n";
         std::string pattern = "";
         Text_Pattern* project_pattern = project->new_pattern("file", "");
         Text_Pattern* start_pattern = project_pattern->new_pattern("start", "");
         start_pattern->set_children_separation(separation_pattern);
         start_pattern->set_default_line_start("// ");
-        start_pattern->set_end_separation(big_separation_pattern);
-        start_pattern->set_start_separation(big_separation_pattern);
+        start_pattern->set_children_separation(big_separation_pattern);
+
+        // Set the project presentation
+        Text_Pattern* start_presentation_pattern = start_pattern->new_pattern("presentation", "");
+        start_presentation_pattern->set_children_separation(separation_pattern);
+        start_presentation_pattern->set_end_separation(external_separation_pattern);
+        start_presentation_pattern->set_start_separation(external_separation_pattern);
         pattern = "";
         pattern += "//\n";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + VARIABLE_END + " -> " + VARIABLE_START + "file_path" + VARIABLE_END + "\n";
         pattern += "//\n";
-        start_pattern->new_pattern("main_title", pattern); pattern = "";
+        start_presentation_pattern->new_pattern("main_title", pattern); pattern = "";
         pattern += "//\n";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + VARIABLE_END + " description\n";
         pattern += "//\n";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE + VARIABLE_END + "\n";
         pattern += "//\n";
-        start_pattern->new_pattern("project_description", pattern); pattern = "";
+        start_presentation_pattern->new_pattern("project_description", pattern); pattern = "";
         pattern += "//\n";
         pattern += "// " + VARIABLE_START + "file_name_extension" + VARIABLE_END + " description\n";
         pattern += "//\n";
         pattern += "// " + VARIABLE_START + "file_description-*>\n";
         pattern += "//\n";
-        start_pattern->new_pattern("file_description", pattern); pattern = "";
+        start_presentation_pattern->new_pattern("file_description", pattern); pattern = "";
         pattern += "//\n";
         pattern += "// License description (" + VARIABLE_START + SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE + VARIABLE_END + ")\n";
         pattern += "//\n";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE + VARIABLE_END + "\n";
         pattern += "//\n";
-        start_pattern->new_pattern("license_description", pattern); pattern = "";
+        start_presentation_pattern->new_pattern("license_description", pattern); pattern = "";
         pattern += "//\n";
         pattern += "// This project uses the Aster System SCLS Format \"Mary\" code format, in the public domain.\n";
         pattern += "// It is also formatted using the Aster System SCLS Documentalist \"Agatha\" library under the GPL V3.0 license.\n";
         pattern += "// See https://aster-system.github.io/aster-system/projects/scls.html for more informations.\n";
         pattern += "//\n";
-        start_pattern->new_pattern("mary_agatha_description", pattern); pattern = "";
+        start_presentation_pattern->new_pattern("mary_agatha_description", pattern); pattern = "";
+
+        // Set the project preprocessors
+        Text_Pattern* start_preprocessor_pattern = start_pattern->new_pattern("preprocessor", "");
+        start_preprocessor_pattern->set_children_separation(external_separation_pattern + "\n");
+        pattern = "";
+        pattern += "//\n";
+        pattern += "// Included files\n";
+        pattern += "//\n";
+        Text_Pattern* include_title = start_preprocessor_pattern->new_pattern("include_title", pattern); pattern = "";
+        include_title->set_start_separation(external_separation_pattern); pattern = "";
+        pattern += "// test1\n";
+        pattern += "#include test2\n";
+        // pattern += "// " + VARIABLE_START + "test1" + VARIABLE_END + "\n";
+        // pattern += "#include " + VARIABLE_START + "test2" + VARIABLE_END + "\n";
+        start_preprocessor_pattern->new_pattern("include", pattern); pattern = "";
 
         return project;
     };
