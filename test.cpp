@@ -115,6 +115,7 @@ void create_scls_documentalist() {
 
 int main() {
     create_hello_world();
+    create_scls_documentalist();
 
     return 0;
 }

@@ -149,15 +149,15 @@ namespace scls {
     }
 
     // Returns the needed variable in the pattern
-    std::vector<Text_Pattern_Variable> _Text_Pattern_Core::needed_variables() {
-        std::vector<Text_Pattern_Variable> to_return = std::vector<Text_Pattern_Variable>();
+    std::vector<Text_Pattern_Base_Variable> _Text_Pattern_Core::needed_variables() {
+        std::vector<Text_Pattern_Base_Variable> to_return = std::vector<Text_Pattern_Base_Variable>();
         std::vector<std::string> cutted = cut_string(base_text(), VARIABLE_START);
 
         for(int i = 1;i<static_cast<int>(cutted.size());i++) {
             std::string variable_name = cut_string(cutted[i], VARIABLE_END)[0];
 
             if(!_contains_pattern_variable_by_name(to_return, variable_name)) {
-                Text_Pattern_Variable variable;
+                Text_Pattern_Base_Variable variable;
                 variable.line_start = default_line_start();
                 variable.name = variable_name;
 
@@ -171,11 +171,11 @@ namespace scls {
 
         // Add children variables
         for(int i = 0;i<static_cast<int>(a_children.size());i++) {
-            std::vector<Text_Pattern_Variable> children_variables = a_children[i]->needed_variables();
+            std::vector<Text_Pattern_Base_Variable> children_variables = a_children[i]->needed_variables();
 
             for(int i = 0;i<static_cast<int>(children_variables.size());i++) {
                 if(!_contains_pattern_variable_by_name(to_return, children_variables[i].name)) {
-                    Text_Pattern_Variable variable;
+                    Text_Pattern_Base_Variable variable;
                     variable.line_start = children_variables[i].line_start;
                     variable.name = children_variables[i].name;
 
@@ -222,13 +222,7 @@ namespace scls {
     }
 
     // Most basic Text_Piece constructor
-    Text_Piece::Text_Piece(std::string name, Text_Pattern& pattern): a_id(_piece_number), a_name(name), a_pattern(pattern) {
-        a_variables = new std::vector<Text_Pattern_Variable>();
-        std::vector<Text_Pattern_Variable> pattern_variable = pattern.needed_variables();
-        for(int i = 0;i<static_cast<int>(pattern_variable.size());i++) {
-            a_variables->push_back(pattern_variable[i]);
-        }
-
+    Text_Piece::Text_Piece(std::string name, Text_Pattern& pattern): a_base_variables(pattern.needed_variables()), a_id(_piece_number), a_name(name), a_pattern(pattern) {
         _piece_number++;
     }
 
@@ -267,17 +261,25 @@ namespace scls {
                 variable_name = variable_name + "]";
                 if(number != "") position = std::stoi(number);
             }
-            Text_Pattern_Variable* pattern_variable = variable(variable_name);
-            if(pattern_variable->content.size() > 0) {
-                if(pattern_variable->content.size() > position) {
-                    variable_name = pattern_variable->content[position];
+
+            Text_Pattern_Base_Variable* pattern_variable = variable(variable_name, false);
+            if(pattern_variable != 0) {
+                variable_name = pattern_variable->content;
+                if(pattern_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + pattern_variable->line_start);
+            }
+            else {
+                pattern_variable = base_variable(variable_name);
+                if(pattern_variable != 0) {
+                    variable_name = pattern_variable->content;
+                    if(pattern_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + pattern_variable->line_start);
                 }
                 else {
-                    print("Warning", "SCLS Documentalist Text Piece", "The text piece \"" + name() + "\" where you want to have the " + std::to_string(position) + "th part of the variable \"" + variable_name + "\" has not enough elements in the variable.");
-                    return text_to_format;
+                    print("Warning", "SCLS Documentalist Text Piece \"" + name() + "\"", "This text piece where you want to get a variable \"" + variable_name + "\" does not have the variable.");
                 }
             }
-            if(pattern_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + pattern_variable->line_start);
+            //*/
+
+            if(variable_name == "") variable_name = "EMPTY";
 
             to_return += variable_name;
             to_return += local_cutted[1];
@@ -298,9 +300,7 @@ namespace scls {
 
     // Text_Piece destructor
     Text_Piece::~Text_Piece() {
-        if(a_variables != 0) {
-            delete a_variables; a_variables = 0;
-        }
+
     }
 }
 

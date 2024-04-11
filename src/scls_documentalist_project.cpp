@@ -187,7 +187,7 @@ namespace scls {
         pattern += "// Included files\n";
         pattern += "//\n";
         pattern += external_separation_pattern + "\n";
-        Text_Pattern* include_title = start_preprocessor_pattern->new_pattern("include_title", pattern); pattern = "";
+        start_preprocessor_pattern->new_pattern("include_title", pattern); pattern = "";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_INCLUDE_PATH + VARIABLE_END + " -> " + VARIABLE_START + SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION + VARIABLE_END + "\n";
         pattern += "#include " + VARIABLE_START + SCLS_DOCUMENTALIST_INCLUDE_PATH + VARIABLE_END + "\n";
         start_preprocessor_pattern->new_pattern("include", pattern); pattern = "";
