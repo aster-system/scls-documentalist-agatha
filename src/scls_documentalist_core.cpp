@@ -101,38 +101,47 @@ namespace scls {
 		return result;
     }
 
-    // Most basic Text_Pattern constructor
-    Text_Pattern::Text_Pattern(std::string name, std::string base_text, Text_Pattern* parent): a_base_text(base_text), a_name(name), a_parent(parent) {
+    // Most basic _Text_Pattern_Core constructor
+    _Text_Pattern_Core::_Text_Pattern_Core(std::string name, std::string base_text, _Text_Pattern_Core* parent): a_base_text(base_text), a_name(name), a_parent(parent) {
         if(parent != 0)parent->add_child(this);
     }
 
-    // Create a new children to the pattern
-    Text_Pattern* Text_Pattern::new_pattern(std::string pattern_name, std::string base_text) {
-        if(contains_children_by_name(pattern_name)) {
-            print("Warning", "SCLS Documentalist Text Pattern", "The text pattern \"" + name() + "\" where you want to add a children \"" + pattern_name + "\" already has a children named like that.");
-            return 0;
-        }
-
-        Text_Pattern* pattern = new Text_Pattern(pattern_name, base_text, this);
-        pattern->set_default_line_start(default_line_start());
-        return pattern;
-    }
-
     // Return the entire text of the pattern
-    std::string Text_Pattern::text(unsigned int id) const {
+    std::string _Text_Pattern_Core::text(unsigned int id) const {
         std::string to_return = "";
 
         to_return += start_separation();
         if(text_position() == 0) to_return += base_text();
 
         for(unsigned int i = 0;i<static_cast<unsigned int>(a_children.size());i++) {
-            Text_Pattern* child = a_children[i];
+            _Text_Pattern_Core* child = a_children[i];
+            if(!child->used(id)) continue;
+            std::string pattern_text = child->text(id);
 
             for(int j = 0;j<static_cast<int>(child->iteration_number(id));j++) {
-                to_return += child->text(id);
+                std::string result = "";
+                std::vector<std::string> cutted = cut_string_out_quotes(pattern_text, VARIABLE_START);
+                result += cutted[0];
+                for(int i = 1;i<static_cast<int>(cutted.size());i++) {
+                    std::vector<std::string> local_cutted = cut_string_out_quotes(cutted[i], VARIABLE_END, true, false);
+                    if(local_cutted.size() < 2) {
+                        print("Warning", "SCLS Documentalist Text Piece", "The text pattern \"" + name() + "\" where you want to get the text is badly syntaxed.");
+                        return "";
+                    }
+
+                    std::string variable_name = local_cutted[0];
+                    if(variable_name.substr(variable_name.size() - 2, 2) == "[]") {
+                        variable_name = variable_name.substr(0, variable_name.size() - 2);
+                        variable_name += "[" + std::to_string(j) + "]";
+                    }
+                    variable_name = VARIABLE_START + variable_name + VARIABLE_END;
+                    result += variable_name;
+                    result += local_cutted[1];
+                }
+                to_return += result;
                 if(i != a_children.size() - 1) to_return += children_separation();
-                if(i + 1 == text_position()) to_return += base_text();
             }
+            if(i + 1 == text_position()) to_return += base_text();
         }
         to_return += end_separation();
 
@@ -140,7 +149,7 @@ namespace scls {
     }
 
     // Returns the needed variable in the pattern
-    std::vector<Text_Pattern_Variable> Text_Pattern::needed_variables() {
+    std::vector<Text_Pattern_Variable> _Text_Pattern_Core::needed_variables() {
         std::vector<Text_Pattern_Variable> to_return = std::vector<Text_Pattern_Variable>();
         std::vector<std::string> cutted = cut_string(base_text(), VARIABLE_START);
 
@@ -153,7 +162,7 @@ namespace scls {
                 variable.name = variable_name;
 
                 if(contains_global_variable(variable_name)) {
-                    // variable.content = global_variable(variable_name);
+                    variable.content = global_variable(variable_name);
                 }
 
                 to_return.push_back(variable);
@@ -171,7 +180,7 @@ namespace scls {
                     variable.name = children_variables[i].name;
 
                     if(contains_global_variable(children_variables[i].name)) {
-                        //variable.content = global_variable(children_variables[i].name);
+                        variable.content = global_variable(children_variables[i].name);
                     }
 
                     to_return.push_back(variable);
@@ -182,12 +191,34 @@ namespace scls {
         return to_return;
     }
 
-    // Text_Pattern destructor
-    Text_Pattern::~Text_Pattern() {
+    // _Text_Pattern_Core destructor
+    _Text_Pattern_Core::~_Text_Pattern_Core() {
         for(int i = 0;i<static_cast<int>(a_children.size());i++) {
             delete a_children[i]; a_children[i] = 0;
         }
         a_children.clear();
+    }
+
+    // Most basic _Text_Pattern_Core constructor
+    Text_Pattern::Text_Pattern(std::string name, std::string base_text, Text_Pattern* parent) : _Text_Pattern_Core(name, base_text, reinterpret_cast<_Text_Pattern_Core*>(parent)) {
+
+    }
+
+    // Create a new children to the pattern
+    Text_Pattern* Text_Pattern::new_pattern(std::string pattern_name, std::string base_text) {
+        if(contains_children_by_name(pattern_name)) {
+            print("Warning", "SCLS Documentalist Text Pattern", "The text pattern \"" + name() + "\" where you want to add a children \"" + pattern_name + "\" already has a children named like that.");
+            return 0;
+        }
+
+        Text_Pattern* pattern = new Text_Pattern(pattern_name, base_text, this);
+        pattern->set_default_line_start(default_line_start());
+        return pattern;
+    }
+
+    // Text_Pattern destructor
+    Text_Pattern::~Text_Pattern() {
+
     }
 
     // Most basic Text_Piece constructor
@@ -219,15 +250,33 @@ namespace scls {
         std::vector<std::string> cutted = cut_string_out_quotes(text_to_format, VARIABLE_START);
         to_return += cutted[0];
         for(int i = 1;i<static_cast<int>(cutted.size());i++) {
-            std::vector<std::string> local_cutted = cut_string_out_quotes(cutted[i], VARIABLE_END);
+            std::vector<std::string> local_cutted = cut_string_out_quotes(cutted[i], VARIABLE_END, true, false);
             if(local_cutted.size() < 2) {
                 print("Warning", "SCLS Documentalist Text Piece", "The text piece \"" + name() + "\" where you want to get the text is badly syntaxed.");
                 return text_to_format;
             }
 
+            unsigned int position = 0;
             std::string variable_name = local_cutted[0];
+            if(variable_name[variable_name.size() - 1] == ']') {
+                std::string number = ""; variable_name = variable_name.substr(0, variable_name.size() - 1);
+                while(variable_name[variable_name.size() - 1] != '[') {
+                    number = variable_name[variable_name.size() - 1] + number;
+                    variable_name = variable_name.substr(0, variable_name.size() - 1);
+                }
+                variable_name = variable_name + "]";
+                if(number != "") position = std::stoi(number);
+            }
             Text_Pattern_Variable* pattern_variable = variable(variable_name);
-            if(pattern_variable->content.size() > 0)variable_name = pattern_variable->content[0];
+            if(pattern_variable->content.size() > 0) {
+                if(pattern_variable->content.size() > position) {
+                    variable_name = pattern_variable->content[position];
+                }
+                else {
+                    print("Warning", "SCLS Documentalist Text Piece", "The text piece \"" + name() + "\" where you want to have the " + std::to_string(position) + "th part of the variable \"" + variable_name + "\" has not enough elements in the variable.");
+                    return text_to_format;
+                }
+            }
             if(pattern_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + pattern_variable->line_start);
 
             to_return += variable_name;

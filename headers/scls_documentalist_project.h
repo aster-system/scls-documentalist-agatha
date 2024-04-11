@@ -37,6 +37,30 @@
 #include "scls_documentalist_core.h"
 
 // Define some stuff in a project
+// Avoid the repetition of an header
+#ifndef SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION
+#define SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION "avoid_header_repetition"
+#endif // SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION
+// Define the description of an included file
+#ifndef SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION
+#define SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION "include_description[]"
+#endif // SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION
+// Define the content of a macro
+#ifndef SCLS_DOCUMENTALIST_MACRO_CONTENT
+#define SCLS_DOCUMENTALIST_MACRO_CONTENT "macro_content[]"
+#endif // SCLS_DOCUMENTALIST_MACRO_CONTENT
+// Define the description of a macro
+#ifndef SCLS_DOCUMENTALIST_MACRO_DESCRIPTION
+#define SCLS_DOCUMENTALIST_MACRO_DESCRIPTION "macro_description[]"
+#endif // SCLS_DOCUMENTALIST_MACRO_DESCRIPTION
+// Define the name of a macro
+#ifndef SCLS_DOCUMENTALIST_MACRO_NAME
+#define SCLS_DOCUMENTALIST_MACRO_NAME "macro_name[]"
+#endif // SCLS_DOCUMENTALIST_MACRO_NAME
+// Define the path of an included file
+#ifndef SCLS_DOCUMENTALIST_INCLUDE_PATH
+#define SCLS_DOCUMENTALIST_INCLUDE_PATH "include_path[]"
+#endif // SCLS_DOCUMENTALIST_INCLUDE_PATH
 // Define the name of the variable of the description of a licence
 #ifndef SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE
 #define SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE "licence_description"
@@ -109,16 +133,16 @@ namespace scls {
         inline bool contains_pattern_by_name(std::string pattern_name) {return pattern_by_name(pattern_name) != 0; };
         inline Text_Piece* file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i]->name()) { return files()[i]; } } return 0; };
         inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
-        inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i].name() == pattern_name) return &patterns()[i]; } return 0;};
+        inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i]->name() == pattern_name) return patterns()[i]; } return 0;};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::vector<Text_Piece*>& files() {return a_files;};
         inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
-        inline std::vector<Text_Pattern>& patterns() {return a_patterns;};
+        inline std::vector<Text_Pattern*>& patterns() {return a_patterns;};
         inline void set_global_variable(std::string variable_name, std::string variable_content) {
             a_global_variables[variable_name] = variable_content;
             for(int i = 0;i<static_cast<int>(patterns().size());i++) {
-                patterns()[i].set_global_variable(variable_name, variable_content);
+                patterns()[i]->set_global_variable(variable_name, variable_content);
             }
         };
     private:
@@ -129,7 +153,7 @@ namespace scls {
         // Value of each defined global variables
         std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
         // Each defined patterns
-        std::vector<Text_Pattern> a_patterns = std::vector<Text_Pattern>();
+        std::vector<Text_Pattern*> a_patterns = std::vector<Text_Pattern*>();
 
         // Datas about the project
         // Description of the project
