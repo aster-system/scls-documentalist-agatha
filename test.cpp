@@ -98,17 +98,17 @@ void create_scls_documentalist() {
     base_h->set_variable("file_description", "This file includes each needed files in SCLS Documentalist.");
     base_h->set_variable("file_name_extension", "scls_documentalist.h");
     base_h->set_variable("file_path", "scls_documentalist.h");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, 0, "\"headers/scls_documentalist_core.h\"");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, 0, "File containing the core of the library.");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, 1, "\"headers/scls_documentalist_project.h\"");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, 1, "File allowing to use complex project.");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[0]", "\"headers/scls_documentalist_core.h\"");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[0]", "File containing the core of the library.");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[1]", "\"headers/scls_documentalist_project.h\"");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[1]", "File allowing to use complex project.");
 
     scls::Text_Piece* test_cpp = project->new_file("test.cpp", "file_cpp");
     test_cpp->set_variable("file_description", "This file handles the testing of SCLS Documentalist.\nThe test is to recreate the project with SCLS Documentalist.");
     test_cpp->set_variable("file_name_extension", "test.cpp");
     test_cpp->set_variable("file_path", "test.cpp");
-    test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, 0, "SCLS Documentalist file which includes each needed files.");
-    test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, 0, "\"scls_documentalist.h\"");
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "SCLS Documentalist file which includes each needed files.");
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "\"scls_documentalist.h\"");
 
     project->save_formatted_as("test/");
 }

@@ -266,23 +266,45 @@ namespace scls {
                 return;
             }
 
-            if(!contains_variable_by_name(variable_name)) {
+            std::string final_variable_name = variable_name;
+            if(final_variable_name[final_variable_name.size() - 1] == ']') {
+                final_variable_name = cut_string(variable_name, "[")[0];
+            }
+            final_variable_name += "[0]";
+
+            if(!contains_variable_by_name(final_variable_name)) {
                 Text_Pattern_Base_Variable* variable_to_copy = base_variable(variable_name);
-                variables()[variable_name] = *variable_to_copy;
+                Text_Pattern_Base_Variable final_variable;
+                final_variable.content = variable_to_copy->content;
+                final_variable.line_start = variable_to_copy->line_start;
+                final_variable.name = variable_to_copy->name;
+                variables()[final_variable_name] = final_variable;
             }
 
-            variables()[variable_name].content = content;
+            variables()[final_variable_name].content = content;
         };
-        inline void set_variable(std::string variable_name, unsigned int offset, std::string content) {
+        inline void set_variable(std::string variable_name, std::string offset, std::string content) {
             if(!contains_base_variable_by_name(variable_name)) {
                 print("Warning", "SCLS Documentalist Text Piece", "The text piece where you want to set a variable \"" + variable_name + "\" does not have the variable.");
                 return;
             }
 
-            // std::vector<std::string> final_content = variable(variable_name)->content;
-            // while(final_content.size() <= offset) final_content.push_back("");
-            // final_content[offset] = content;
-            // variable(variable_name)->content = final_content;
+            std::string final_variable_name = variable_name;
+            if(final_variable_name[final_variable_name.size() - 1] == ']') {
+                final_variable_name = cut_string(variable_name, "[")[0];
+            }
+            final_variable_name += offset;
+
+            if(!contains_variable_by_name(final_variable_name)) {
+                Text_Pattern_Base_Variable* variable_to_copy = base_variable(variable_name);
+                Text_Pattern_Base_Variable final_variable;
+                final_variable.content = variable_to_copy->content;
+                final_variable.line_start = variable_to_copy->line_start;
+                final_variable.name = variable_to_copy->name;
+                variables()[final_variable_name] = final_variable;
+            }
+
+            variables()[final_variable_name].content = content;
         };
         inline Text_Pattern_Base_Variable* variable(std::string variable_name) {
             for(std::map<std::string, Text_Pattern_Base_Variable>::iterator it = variables().begin();it!=variables().end();it++) {

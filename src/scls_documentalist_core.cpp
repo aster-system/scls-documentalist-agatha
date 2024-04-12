@@ -250,7 +250,9 @@ namespace scls {
                 return text_to_format;
             }
 
-            unsigned int position = 0;
+            // Get the way to the variable
+            std::string final_variable_name = local_cutted[0];
+            std::string position = "";
             std::string variable_name = local_cutted[0];
             if(variable_name[variable_name.size() - 1] == ']') {
                 std::string number = ""; variable_name = variable_name.substr(0, variable_name.size() - 1);
@@ -258,11 +260,14 @@ namespace scls {
                     number = variable_name[variable_name.size() - 1] + number;
                     variable_name = variable_name.substr(0, variable_name.size() - 1);
                 }
+                final_variable_name = variable_name.substr(0, variable_name.size() - 1);
                 variable_name = variable_name + "]";
-                if(number != "") position = std::stoi(number);
+                if(number != "") position += "[" + number + "]";
             }
+            if(position == "") position = "[0]";
+            final_variable_name += position;
 
-            Text_Pattern_Base_Variable* pattern_variable = variable(variable_name, false);
+            Text_Pattern_Base_Variable* pattern_variable = variable(final_variable_name, false);
             if(pattern_variable != 0) {
                 variable_name = pattern_variable->content;
                 if(pattern_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + pattern_variable->line_start);
@@ -277,7 +282,6 @@ namespace scls {
                     print("Warning", "SCLS Documentalist Text Piece \"" + name() + "\"", "This text piece where you want to get a variable \"" + variable_name + "\" does not have the variable.");
                 }
             }
-            //*/
 
             if(variable_name == "") variable_name = "EMPTY";
 
