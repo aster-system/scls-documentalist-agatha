@@ -43,14 +43,20 @@ void create_hello_world() {
     project->set_global_variable(SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE, "Hello World");
 
     scls::Text_Piece* core_cpp = project->new_file("main.cpp", "file_cpp");
+    core_cpp->set_pattern_iterations_number("code_content", 2);
     core_cpp->set_variable("file_description", "This file contains the main code of the project.");
     core_cpp->set_variable("file_name_extension", "main.cpp");
     core_cpp->set_variable("file_path", "main.cpp");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "Print \"to_print\" in the C++ console.");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "void print(std::string to_print) {\n    std::cout << to_print << std::endl;\n}");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE + "[1]", "Main function of the program");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART + "[1]", "int main() {\n    print(TEXT);\n}");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "Use the in/out C++ functions.");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "<iostream>");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_MACRO_CONTENT, "\"Hello world !\"");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_MACRO_DESCRIPTION, "Test said by the file.");
-    core_cpp->set_variable(SCLS_DOCUMENTALIST_MACRO_NAME, "text");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_MACRO_NAME, "TEXT");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE, "Mains functions");
 
     project->save_formatted_as("test/");
 }
@@ -93,22 +99,34 @@ void create_scls_documentalist() {
     project_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "\"scls_documentalist_core.h\"");
 
     scls::Text_Piece* base_h = project->new_file("scls_documentalist.h", "file_h");
-    base_h->pattern("include")->set_iteration_number(base_h->id(), 2);
+    base_h->set_pattern_iterations_number("include", 2);
     base_h->set_variable(SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION, "SCLS_DOCUMENTALIST");
     base_h->set_variable("file_description", "This file includes each needed files in SCLS Documentalist.");
     base_h->set_variable("file_name_extension", "scls_documentalist.h");
     base_h->set_variable("file_path", "scls_documentalist.h");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[0]", "\"headers/scls_documentalist_core.h\"");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[0]", "File containing the core of the library.");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[1]", "\"headers/scls_documentalist_project.h\"");
-    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[1]", "File allowing to use complex project.");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH + "[0]", "\"headers/scls_documentalist_core.h\"");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION + "[0]", "File containing the core of the library.");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH + "[1]", "\"headers/scls_documentalist_project.h\"");
+    base_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION + "[1]", "File allowing to use complex project.");
 
     scls::Text_Piece* test_cpp = project->new_file("test.cpp", "file_cpp");
+    test_cpp->set_pattern_iterations_number("code", 2);
+    test_cpp->set_pattern_iterations_number("code_content[0]", 2);
+    test_cpp->set_pattern_iterations_number("code_content[1]", 2);
     test_cpp->set_variable("file_description", "This file handles the testing of SCLS Documentalist.\nThe test is to recreate the project with SCLS Documentalist.");
     test_cpp->set_variable("file_name_extension", "test.cpp");
     test_cpp->set_variable("file_path", "test.cpp");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "SCLS Documentalist file which includes each needed files.");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "\"scls_documentalist.h\"");
+
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART + "[0][0]", scls::replace(scls::read_file("test/codes/p_0_0.txt"), "\n\n", "\n"));
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART + "[0][1]", scls::replace(scls::read_file("test/codes/p_0_1.txt"), "\n\n", "\n"));
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE + "[0][0]", "Test the project with a simple Hello World project.");
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE + "[0][1]", "Test the project by remaking it.");
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART + "[1][0]", scls::replace(scls::read_file("test/codes/p_1_0.txt"), "\n\n", "\n"));
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE + "[1][0]", "Main function of the program.");
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE + "[0]", "Testing functions");
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE + "[1]", "Mains functions");
 
     project->save_formatted_as("test/");
 }

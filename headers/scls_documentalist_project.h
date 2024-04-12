@@ -39,44 +39,56 @@
 // Define some stuff in a project
 // Avoid the repetition of an header
 #ifndef SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION
-#define SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION "avoid_header_repetition"
+#define SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION std::string("avoid_header_repetition")
 #endif // SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION
+// Define the name of the variable of a part of code
+#ifndef SCLS_DOCUMENTALIST_CODE_PART
+#define SCLS_DOCUMENTALIST_CODE_PART std::string("code_part[]")
+#endif // SCLS_DOCUMENTALIST_CODE_PART_TITLE
+// Define the name of the variable of the title of a part of code
+#ifndef SCLS_DOCUMENTALIST_CODE_PART_TITLE
+#define SCLS_DOCUMENTALIST_CODE_PART_TITLE std::string("code_part_title[]")
+#endif // SCLS_DOCUMENTALIST_CODE_PART_TITLE
 // Define the description of an included file
 #ifndef SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION
-#define SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION "include_description[]"
+#define SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION std::string("include_description[]")
 #endif // SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION
 // Define the content of a macro
 #ifndef SCLS_DOCUMENTALIST_MACRO_CONTENT
-#define SCLS_DOCUMENTALIST_MACRO_CONTENT "macro_content[]"
+#define SCLS_DOCUMENTALIST_MACRO_CONTENT std::string("macro_content[]")
 #endif // SCLS_DOCUMENTALIST_MACRO_CONTENT
 // Define the description of a macro
 #ifndef SCLS_DOCUMENTALIST_MACRO_DESCRIPTION
-#define SCLS_DOCUMENTALIST_MACRO_DESCRIPTION "macro_description[]"
+#define SCLS_DOCUMENTALIST_MACRO_DESCRIPTION std::string("macro_description[]")
 #endif // SCLS_DOCUMENTALIST_MACRO_DESCRIPTION
 // Define the name of a macro
 #ifndef SCLS_DOCUMENTALIST_MACRO_NAME
-#define SCLS_DOCUMENTALIST_MACRO_NAME "macro_name[]"
+#define SCLS_DOCUMENTALIST_MACRO_NAME std::string("macro_name[]")
 #endif // SCLS_DOCUMENTALIST_MACRO_NAME
 // Define the path of an included file
 #ifndef SCLS_DOCUMENTALIST_INCLUDE_PATH
-#define SCLS_DOCUMENTALIST_INCLUDE_PATH "include_path[]"
+#define SCLS_DOCUMENTALIST_INCLUDE_PATH std::string("include_path[]")
 #endif // SCLS_DOCUMENTALIST_INCLUDE_PATH
 // Define the name of the variable of the description of a licence
 #ifndef SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE
-#define SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE "licence_description"
+#define SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE std::string("licence_description")
 #endif // SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE
 // Define the name of the variable of the name of a licence
 #ifndef SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE
-#define SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE "licence_name"
+#define SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE std::string("licence_name")
 #endif // SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE
 // Define the name of the variable of the description of a project
 #ifndef SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE
-#define SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE "project_description"
+#define SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE std::string("project_description")
 #endif // SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE
 // Define the name of the variable of the name of a project
 #ifndef SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE
-#define SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE "project_name"
+#define SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE std::string("project_name")
 #endif // SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE
+// Define the name of the variable of the title of a part of a project
+#ifndef SCLS_DOCUMENTALIST_TITLE
+#define SCLS_DOCUMENTALIST_TITLE std::string("part_title[]")
+#endif // SCLS_DOCUMENTALIST_TITLE
 
 // Use of the "scls" namespace to be more easily usable
 namespace scls {

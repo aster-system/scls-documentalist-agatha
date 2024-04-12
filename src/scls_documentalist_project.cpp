@@ -203,6 +203,16 @@ namespace scls {
         pattern += "#define " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + " " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_CONTENT + VARIABLE_END + "\n";
         pattern += "#endif // " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + "\n";
         start_preprocessor_pattern->new_pattern("macro", pattern); pattern = "";
+        // Set the code part
+        pattern += external_separation_pattern;
+        pattern += "//\n";
+        pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_TITLE + VARIABLE_END + "\n";
+        pattern += "//\n";
+        pattern += external_separation_pattern + "\n";
+        Text_Pattern* code_pattern = project_pattern->new_pattern("code", pattern); pattern = "";
+        pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_CODE_PART_TITLE + VARIABLE_END + "\n";
+        pattern += VARIABLE_START + SCLS_DOCUMENTALIST_CODE_PART + VARIABLE_END + "\n\n";
+        code_pattern->new_pattern("code_content", pattern); pattern = "";
 
         // Create header pattern
         project_pattern = project->new_pattern("file_h", "");
