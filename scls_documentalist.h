@@ -1,4 +1,4 @@
-//******************
+////////////////////////////
 //
 // SCLS Documentalist -> scls_documentalist.h
 //
@@ -6,24 +6,26 @@
 //
 // SCLS Documentalist description
 //
-// SCLS Documentalist "Agatha" is a part of the Aster System SCLS project.
-// This part is made to easily document C++ files.
-// It is made for SCLS, but you can still use it in your project. However, it may be a little less adapted.
-// This part is named after one of the most famous author, Agatha Christie.
+// SCLS Documentalist is a part of the SCLS library.
+//
+// SLCS is a set of C++ library, made to make C++ development easier.
+// For more information, see https://aster-system.github.io/aster-system/projects/scls.html.
+//
+// The Documentalist part is a part of the library made to handle easily file documentation.
+// For that, it uses the SCLS Format "Mary" C++ format.
+// For more information, see https://aster-system.github.io/aster-system/scls/documentalist.html.
 //
 //******************
 //
 // scls_documentalist.h description
 //
-// This file represents an access to the SCLS Documentalist files.
-// It include every SCLS Documentalist needed files.
-// You juste have to include it in you other project to use SCLS Documentalist.
+// This file includes each needed files in SCLS Documentalist.
 //
 //******************
 //
-// License (GPLv3)
+// License description (GPL V3.0)
 //
-// This file is part of SCLS Documentalist.
+// This file is part of SCLS Documentalist project.
 //
 // SCLS Documentalist is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -32,11 +34,50 @@
 //
 // You should have received a copy of the GNU General Public License along with SCLS Documentalist. If not, see <https://www.gnu.org/licenses/>.
 //
+//******************
+//
+// This project uses the Aster System SCLS Format "Mary" code format, in the public domain.
+// It is also formatted using the Aster System SCLS Documentalist "Agatha" library under the GPL V3.0 license.
+// See https://aster-system.github.io/aster-system/projects/scls.html for more informations.
+//
+////////////////////////////
+
+
+////////////////////////////////////////////////////////
+//****************************************************//
+////////////////////////////////////////////////////////
+
+
+////////////////////////////
+//
+// Avoid multiple header repetitions
+//
+////////////////////////////
 
 #ifndef SCLS_DOCUMENTALIST
 #define SCLS_DOCUMENTALIST
 
+////////////////////////////
+//
+// Included files
+//
+////////////////////////////
+
+// "headers/scls_documentalist_core.h" -> File containing the core of the library.
 #include "headers/scls_documentalist_core.h"
+// "headers/scls_documentalist_project.h" -> File allowing to use complex project.
 #include "headers/scls_documentalist_project.h"
+
+
+////////////////////////////////////////////////////////
+//****************************************************//
+////////////////////////////////////////////////////////
+
+
+////////////////////////////
+//
+// Avoid multiple header repetitions
+//
+////////////////////////////
 
 #endif // SCLS_DOCUMENTALIST

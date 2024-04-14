@@ -62,12 +62,15 @@ namespace scls {
 
 			if(str[i] == '\\')
             {
-                if(special_character) special_character = false;
-                else special_character = true;
+                special_character = !special_character;
             }
 			else if(str[i] == '\"' && !special_character)
             {
                 in_quotes = !in_quotes;
+                last_string = "";
+            }
+            else {
+                special_character = false;
             }
 		}
 	    return false;
@@ -274,12 +277,12 @@ namespace scls {
             std::string current_base_text = current_pattern->base_text();
             // Handle the variables
             while(contains_out_of_quotes(current_base_text, VARIABLE_START)) {
-                std::vector<std::string> cutted = cut_string_out_quotes(current_base_text, VARIABLE_START);
+                std::vector<std::string> cutted = cut_string_out_quotes(current_base_text, VARIABLE_START, false, false);
                 current_base_text = "";
 
                 current_base_text += cutted[0];
                 for(int k = 1;k<static_cast<int>(cutted.size());k++) {
-                    std::vector<std::string> sub_cutted = cut_string_out_quotes(cutted[k], VARIABLE_END);
+                    std::vector<std::string> sub_cutted = cut_string_out_quotes(cutted[k], VARIABLE_END, false, false);
                     if(sub_cutted.size() != 2) {
                         print("Warning", "SCLS Documentalist Text Piece " + name(), "The text of the pattern \"" + current_pattern->name() + "\n is badly syntaxed.");
                         return "";
@@ -288,7 +291,7 @@ namespace scls {
                     // Handle the name of the variable
                     int j = 0;
                     std::string variable_content = "[]";
-                    const std::vector<std::string> variable_cutted = cut_string(sub_cutted[0], "[");
+                    const std::vector<std::string> variable_cutted = cut_string_out_quotes(sub_cutted[0], "[");
                     std::string variable_name = sub_cutted[0];
                     std::string variable_new_offset = "";
                     std::string variable_offset = variable_name.substr(variable_cutted[0].size(), variable_name.size() - variable_cutted[0].size());
