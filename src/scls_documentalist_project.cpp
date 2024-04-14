@@ -212,7 +212,7 @@ namespace scls {
         Text_Pattern* code_pattern = project_pattern->new_pattern("code", pattern); pattern = "";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_CODE_PART_TITLE + VARIABLE_END + "\n";
         pattern += VARIABLE_START + SCLS_DOCUMENTALIST_CODE_PART + VARIABLE_END + "\n\n";
-        code_pattern->new_pattern("code_content", pattern); pattern = "";
+        code_pattern->new_pattern("code_content[]", pattern); pattern = "";
 
         // Create header pattern
         project_pattern = project->new_pattern("file_h", "");

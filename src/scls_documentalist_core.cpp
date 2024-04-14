@@ -101,6 +101,27 @@ namespace scls {
 		return result;
     }
 
+    // Unformat a SCLS Documentalist pattern settings
+    std::string unformat_pattern_settings(std::string pattern_settings) {
+        std::string final_settings = "";
+        while(pattern_settings[pattern_settings.size() - 1] == ']') {
+            std::string part_content = "";
+            pattern_settings = pattern_settings.substr(0, pattern_settings.size() - 1);
+            while(pattern_settings[pattern_settings.size() - 1] != '[') {
+                part_content = pattern_settings[pattern_settings.size() - 1] + part_content;
+                pattern_settings = pattern_settings.substr(0, pattern_settings.size() - 1);
+            }
+            pattern_settings = pattern_settings.substr(0, pattern_settings.size() - 1);
+            if(part_content == ".") {
+                final_settings = "[.]" + final_settings;
+            }
+            else {
+                final_settings = "[]" + final_settings;
+            }
+        }
+        return final_settings;
+    }
+
     // Most basic _Text_Pattern_Core constructor
     _Text_Pattern_Core::_Text_Pattern_Core(std::string name, std::string base_text, _Text_Pattern_Core* parent): a_base_text(base_text), a_name(name), a_parent(parent) {
         if(parent != 0)parent->add_child(this);
@@ -270,19 +291,23 @@ namespace scls {
     }
 
     // Return the text well formatted
-    std::string Text_Piece::text_with_pattern(std::string id) {
+    std::string Text_Piece::text_with_pattern(std::string id, std::vector<int> iterations) {
+        bool write_variable_name = false;
+
         std::string pattern_name = cut_string(id, "[")[0];
-        std::string pattern_settings = id.substr(pattern_name.size(), id.size() - pattern_name.size());
+        std::string pattern_settings = unformat_pattern_settings(id.substr(pattern_name.size(), id.size() - pattern_name.size()));
         std::string to_return = "";
 
         // Handle piece-only characteristics
         if(!pattern_used(id)) return to_return;
-        _Text_Pattern_Core* current_pattern = pattern(pattern_name);
+        _Text_Pattern_Core* current_pattern = pattern(pattern_name + pattern_settings);
         unsigned int iteration = 1;
         if(contains_patterns_iterations(id)) { iteration = pattern_iterations(id); }
+        iterations.push_back(0);
 
         // Make the text
         for(unsigned int i = 0;i<iteration;i++) {
+            iterations[iterations.size() - 1] = i;
             // Create the current base text
             std::string current_base_text = current_pattern->base_text();
             // Handle the variables
@@ -299,22 +324,54 @@ namespace scls {
                     }
 
                     // Handle the name of the variable
+                    int j = 0;
+                    std::string variable_content = "[]";
+                    const std::vector<std::string> variable_cutted = cut_string(sub_cutted[0], "[");
                     std::string variable_name = sub_cutted[0];
-                    Text_Pattern_Base_Variable* current_variable = variable(variable_name, false);
+                    std::string variable_new_offset = "";
+                    std::string variable_offset = variable_name.substr(variable_cutted[0].size(), variable_name.size() - variable_cutted[0].size());
+                    while(variable_name[variable_name.size() - 1] == ']') {
+                        std::string part_content = "";
+                        variable_name = variable_name.substr(0, variable_name.size() - 1);
+                        while(variable_name[variable_name.size() - 1] != '[') {
+                            part_content = variable_name[variable_name.size() - 1] + part_content;
+                            variable_name = variable_name.substr(0, variable_name.size() - 1);
+                        }
+                        variable_name = variable_name.substr(0, variable_name.size() - 1);
+                        if(part_content == "") {
+                            variable_new_offset = "[" + std::to_string(iterations[iterations.size() - (j + 1)]) + "]" + variable_new_offset;
+                        }
+                        else if(part_content == ".") {
+                            variable_new_offset = "[.]" + variable_new_offset;
+                        }
+                        j++;
+                    }
+
+                    // Get the variable
+                    Text_Pattern_Base_Variable* current_variable = variable(variable_name + variable_new_offset, false);
                     if(current_variable == 0) {
-                        current_variable = base_variable(variable_name);
+                        current_variable = variable(variable_name + "[0]", false);
+                        if(current_variable == 0) {
+                            current_variable = base_variable(variable_name);
+                            if(current_variable == 0) {
+                                current_variable = base_variable(variable_name + "[]");
+                            }
+                        }
                     }
 
                     // Change the text according to the variable
                     if(current_variable == 0) {
                         print("Warning", "SCLS Documentalist Text Piece " + name(), "The variable of the pattern \"" + current_pattern->name() + "\n does not exist in the piece.");
+                        variable_content = "(unknow variable \"" + variable_name + "\")";
                     }
                     else {
-                        variable_name = current_variable->content;
-                            if(current_variable->line_start != "") variable_name = replace(variable_name, "\n", "\n" + current_variable->line_start);
+                        if(write_variable_name) variable_content = "(" + variable_name + ")" + current_variable->content;
+                        else variable_content = current_variable->content;
+
+                        if(current_variable->line_start != "") variable_content = replace(variable_content, "\n", "\n" + current_variable->line_start);
                     }
 
-                    current_base_text += variable_name;
+                    current_base_text += variable_content;
                     current_base_text += sub_cutted[1];
                 }
             }
@@ -324,12 +381,29 @@ namespace scls {
 
             // Get the text of the children of the pattern
             for(unsigned int j = 0;j<current_pattern->children().size();j++) {
+                // Get datas about the child
                 _Text_Pattern_Core* child = current_pattern->children()[j];
-                std::string pattern_text = text_with_pattern(child->name());
+                std::string child_name = child->name();
+                std::string child_new_offset = "";
+                while(child_name[child_name.size() - 1] == ']') {
+                    std::string child_content = "";
+                    child_name = child_name.substr(0, child_name.size() - 1);
+                    while(child_name[child_name.size() - 1] != '[') {
+                        child_content = child_name[child_name.size() - 1] + child_content;
+                        child_name = child_name.substr(0, child_name.size() - 1);
+                    }
+                    child_name = child_name.substr(0, child_name.size() - 1);
+                    if(child_content == "") {
+                        child_new_offset = "[" + std::to_string(i) + "]" + child_new_offset;
+                    }
+                    else if(child_content == ".") {
+                        child_new_offset = "[.]" + child_new_offset;
+                    }
+                }
+                // Get and format the text of the child
+                std::string pattern_text = text_with_pattern(child_name + child_new_offset, iterations);
                 to_return += pattern_text;
-
                 if(j != current_pattern->children().size() - 1) to_return += current_pattern->children_separation();
-
                 if(current_pattern->text_position() == j + 1) {
                     if(j == current_pattern->children().size() - 1) to_return += current_pattern->children_separation();
                     to_return += current_base_text;
@@ -340,6 +414,12 @@ namespace scls {
             to_return += current_pattern->end_separation();
         }
 
+        return to_return;
+    }
+
+    // Return the text well formatted
+    std::string Text_Piece::text_with_pattern(std::string id) {
+        std::string to_return = text_with_pattern(id, std::vector<int>());
         return to_return;
     }
 

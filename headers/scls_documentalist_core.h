@@ -45,6 +45,9 @@ namespace scls {
     // Returns a string cutted by ignoring quote
     std::vector<std::string> cut_string_out_quotes(std::string string, std::string cut, bool erase_blank = false, bool erase_last_if_blank = true);
 
+    // Unformat a SCLS Documentalist pattern settings
+    std::string unformat_pattern_settings(std::string pattern_settings);
+
     struct Text_Pattern_Base_Variable {
         // Struct representing a variable in a text pattern
         // Content if the variable
@@ -209,6 +212,8 @@ namespace scls {
         void save_as(std::string path);
 
         // Return the text well formatted
+        std::string text_with_pattern(std::string id, std::vector<int> iterations);
+        // Return the text well formatted
         std::string text_with_pattern(std::string id);
         // Return the text well formatted
         std::string text();
@@ -272,7 +277,7 @@ namespace scls {
         inline void set_pattern_iterations_number(std::string pattern_name, unsigned int iterations_number) {
             a_patterns_iterations[pattern_name] = iterations_number;
         }
-        inline void set_variable(std::string variable_name, std::string content) {
+        inline void set_variable(std::string variable_name, std::string offset, std::string content) {
             if(!contains_base_variable_by_name(variable_name)) {
                 print("Warning", "SCLS Documentalist Text Piece \"" + name() + "\"", "This text piece where you want to set a variable \"" + variable_name + "\" does not have the variable.");
                 return;
@@ -282,7 +287,7 @@ namespace scls {
             if(final_variable_name[final_variable_name.size() - 1] == ']') {
                 final_variable_name = cut_string(variable_name, "[")[0];
             }
-            final_variable_name += "[0]";
+            final_variable_name += offset;
 
             if(!contains_variable_by_name(final_variable_name)) {
                 Text_Pattern_Base_Variable* variable_to_copy = base_variable(variable_name);
@@ -294,6 +299,9 @@ namespace scls {
             }
 
             variables()[final_variable_name].content = content;
+        };
+        inline void set_variable(std::string variable_name, std::string content) {
+            set_variable(variable_name, "[0]", content);
         };
         inline Text_Pattern_Base_Variable* variable(std::string variable_name) {
             for(std::map<std::string, Text_Pattern_Base_Variable>::iterator it = variables().begin();it!=variables().end();it++) {

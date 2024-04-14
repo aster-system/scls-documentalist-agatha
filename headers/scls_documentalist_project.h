@@ -43,11 +43,11 @@
 #endif // SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION
 // Define the name of the variable of a part of code
 #ifndef SCLS_DOCUMENTALIST_CODE_PART
-#define SCLS_DOCUMENTALIST_CODE_PART std::string("code_part[]")
+#define SCLS_DOCUMENTALIST_CODE_PART std::string("code_part[][]")
 #endif // SCLS_DOCUMENTALIST_CODE_PART_TITLE
 // Define the name of the variable of the title of a part of code
 #ifndef SCLS_DOCUMENTALIST_CODE_PART_TITLE
-#define SCLS_DOCUMENTALIST_CODE_PART_TITLE std::string("code_part_title[]")
+#define SCLS_DOCUMENTALIST_CODE_PART_TITLE std::string("code_part_title[][]")
 #endif // SCLS_DOCUMENTALIST_CODE_PART_TITLE
 // Define the description of an included file
 #ifndef SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION
