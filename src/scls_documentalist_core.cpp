@@ -42,6 +42,37 @@ namespace scls {
     // Number of the pieces created
     static unsigned int _piece_number;
 
+    // Return if a string contains an another string out of quotes
+    bool contains_out_of_quotes(std::string str, std::string part) {
+	    bool in_quotes = false;
+		bool special_character = false;
+	    std::string last_string = ""; // String since the last cut
+		for (int i = 0; i < static_cast<int>(str.size()); i++) // Browse the string char by char
+		{
+			last_string += str[i];
+			if (last_string.size() > part.size()) // If the string which allows to know where to cut is too long, cut him
+			{
+				last_string = last_string.substr(1, part.size());
+			}
+
+			if (last_string == part && !in_quotes) // If the string which allows to know where to find the equality is true, return true
+			{
+				return true;
+			}
+
+			if(str[i] == '\\')
+            {
+                if(special_character) special_character = false;
+                else special_character = true;
+            }
+			else if(str[i] == '\"' && !special_character)
+            {
+                in_quotes = !in_quotes;
+            }
+		}
+	    return false;
+	};
+
     // Returns a string cutted by ignoring quote
     std::vector<std::string> cut_string_out_quotes(std::string string, std::string cut, bool erase_blank, bool erase_last_if_blank) {
 		bool in_quotes = false;
@@ -126,79 +157,6 @@ namespace scls {
     _Text_Pattern_Core::_Text_Pattern_Core(std::string name, std::string base_text, _Text_Pattern_Core* parent): a_base_text(base_text), a_name(name), a_parent(parent) {
         if(parent != 0)parent->add_child(this);
     }
-
-    /*// Return the entire text of the pattern
-    std::string _Text_Pattern_Core::text(std::string id, std::string offset) const {
-        std::string pattern_text = child->text(id, offset + to_add_offset);
-        std::string result = "";
-        std::vector<std::string> cutted = cut_string_out_quotes(pattern_text, VARIABLE_START);
-        result += cutted[0];
-        for(int i = 1;i<static_cast<int>(cutted.size());i++) {
-            std::vector<std::string> local_cutted = cut_string_out_quotes(cutted[i], VARIABLE_END, true, false);
-            if(local_cutted.size() < 2) {
-                print("Warning", "SCLS Documentalist Text Piece", "The text pattern \"" + name() + "\" where you want to get the text is badly syntaxed.");
-                return "";
-            }
-
-            std::string variable_name = local_cutted[0];
-            if(variable_name.substr(variable_name.size() - 2, 2) == "[]") {
-                variable_name = cut_string(variable_name, "[")[0];
-                variable_name += offset + "[" + std::to_string(j) + "]";
-            }
-            variable_name = VARIABLE_START + variable_name + VARIABLE_END;
-            result += variable_name;
-            result += local_cutted[1];
-        }
-        to_return += result;
-        if(i != a_children.size() - 1) to_return += children_separation();
-    }
-    if(i + 1 == text_position()) to_return += base_text();
-    } //*/
-
-    /*// Return the entire text of the pattern
-    std::string _Text_Pattern_Core::text(std::string id) const {
-        std::string to_return = "";
-
-        to_return += start_separation();
-        if(text_position() == 0) to_return += base_text();
-
-        for(unsigned int i = 0;i<static_cast<unsigned int>(a_children.size());i++) {
-            _Text_Pattern_Core* child = a_children[i];
-            if(!child->used(id)) continue;
-
-            unsigned int iterations = child->iteration_number(id);
-            for(unsigned int j = 0;j<iterations;j++) {
-                std::string to_add_offset = "[" + std::to_string(j) + "]";
-                if(iterations <= 1) to_add_offset = "";
-                std::string pattern_text = child->text(id, to_add_offset);
-                std::string result = "";
-                std::vector<std::string> cutted = cut_string_out_quotes(pattern_text, VARIABLE_START);
-                result += cutted[0];
-                for(int i = 1;i<static_cast<int>(cutted.size());i++) {
-                    std::vector<std::string> local_cutted = cut_string_out_quotes(cutted[i], VARIABLE_END, true, false);
-                    if(local_cutted.size() < 2) {
-                        print("Warning", "SCLS Documentalist Text Piece", "The text pattern \"" + name() + "\" where you want to get the text is badly syntaxed.");
-                        return "";
-                    }
-
-                    std::string variable_name = local_cutted[0];
-                    if(variable_name.substr(variable_name.size() - 2, 2) == "[]") {
-                        variable_name = cut_string(variable_name, "[")[0];
-                        variable_name += to_add_offset;
-                    }
-                    variable_name = VARIABLE_START + variable_name + VARIABLE_END;
-                    result += variable_name;
-                    result += local_cutted[1];
-                }
-                to_return += result;
-                if(i != a_children.size() - 1) to_return += children_separation();
-            }
-            if(i + 1 == text_position()) to_return += base_text();
-        }
-        to_return += end_separation();
-
-        return to_return;
-    } //*/
 
     // Returns the needed variable in the pattern
     std::vector<Text_Pattern_Base_Variable> _Text_Pattern_Core::needed_variables() {
@@ -306,18 +264,22 @@ namespace scls {
         iterations.push_back(0);
 
         // Make the text
+        unsigned int computed_iteration = 0;
         for(unsigned int i = 0;i<iteration;i++) {
+            // Handle this iteration
             iterations[iterations.size() - 1] = i;
+            std::string iteration_text = "";
+
             // Create the current base text
             std::string current_base_text = current_pattern->base_text();
             // Handle the variables
-            while(contains(current_base_text, VARIABLE_START)) {
-                std::vector<std::string> cutted = cut_string(current_base_text, VARIABLE_START);
+            while(contains_out_of_quotes(current_base_text, VARIABLE_START)) {
+                std::vector<std::string> cutted = cut_string_out_quotes(current_base_text, VARIABLE_START);
                 current_base_text = "";
 
                 current_base_text += cutted[0];
                 for(int k = 1;k<static_cast<int>(cutted.size());k++) {
-                    std::vector<std::string> sub_cutted = cut_string(cutted[k], VARIABLE_END);
+                    std::vector<std::string> sub_cutted = cut_string_out_quotes(cutted[k], VARIABLE_END);
                     if(sub_cutted.size() != 2) {
                         print("Warning", "SCLS Documentalist Text Piece " + name(), "The text of the pattern \"" + current_pattern->name() + "\n is badly syntaxed.");
                         return "";
@@ -330,7 +292,7 @@ namespace scls {
                     std::string variable_name = sub_cutted[0];
                     std::string variable_new_offset = "";
                     std::string variable_offset = variable_name.substr(variable_cutted[0].size(), variable_name.size() - variable_cutted[0].size());
-                    while(variable_name[variable_name.size() - 1] == ']') {
+                    while(variable_name.size() > 0 && variable_name[variable_name.size() - 1] == ']') {
                         std::string part_content = "";
                         variable_name = variable_name.substr(0, variable_name.size() - 1);
                         while(variable_name[variable_name.size() - 1] != '[') {
@@ -352,6 +314,16 @@ namespace scls {
                     if(current_variable == 0) {
                         current_variable = variable(variable_name + "[0]", false);
                         if(current_variable == 0) {
+                            // Handle forced variables
+                            int hierarchy = current_pattern->forced_user_defined_variable_hierarchy(variable_name);
+                            if(hierarchy != -1) {
+                                return SCLS_DOCUMENTALIST_FORCED_USER_DEFINED_VARIABLE_ERROR + SCLS_DOCUMENTALIST_ERROR_CUTTER + variable_name + SCLS_DOCUMENTALIST_ERROR_CUTTER + std::to_string(hierarchy);
+                            }
+                            hierarchy = current_pattern->forced_user_defined_variable_hierarchy(variable_name + "[]");
+                            if(hierarchy != -1) {
+                                return SCLS_DOCUMENTALIST_FORCED_USER_DEFINED_VARIABLE_ERROR + SCLS_DOCUMENTALIST_ERROR_CUTTER + variable_name + "[]" + SCLS_DOCUMENTALIST_ERROR_CUTTER + std::to_string(hierarchy);
+                            }
+
                             current_variable = base_variable(variable_name);
                             if(current_variable == 0) {
                                 current_variable = base_variable(variable_name + "[]");
@@ -376,8 +348,8 @@ namespace scls {
                 }
             }
 
-            to_return += current_pattern->start_separation();
-            if(current_pattern->text_position() == 0) to_return += current_base_text;
+            iteration_text += current_pattern->start_separation();
+            if(current_pattern->text_position() == 0) iteration_text += current_base_text;
 
             // Get the text of the children of the pattern
             for(unsigned int j = 0;j<current_pattern->children().size();j++) {
@@ -400,19 +372,34 @@ namespace scls {
                         child_new_offset = "[.]" + child_new_offset;
                     }
                 }
-                // Get and format the text of the child
+                // Get the text and handle errors
                 std::string pattern_text = text_with_pattern(child_name + child_new_offset, iterations);
-                to_return += pattern_text;
-                if(j != current_pattern->children().size() - 1) to_return += current_pattern->children_separation();
+                std::vector<std::string> error = cut_string(pattern_text, SCLS_DOCUMENTALIST_ERROR_CUTTER);
+                if(pattern_text == "") continue;
+                else if(error[0] == SCLS_DOCUMENTALIST_FORCED_USER_DEFINED_VARIABLE_ERROR) {
+                    int n = std::stoi(error[2]);
+                    if(n > 0) {
+                        return SCLS_DOCUMENTALIST_FORCED_USER_DEFINED_VARIABLE_ERROR + SCLS_DOCUMENTALIST_ERROR_CUTTER + error[1] + SCLS_DOCUMENTALIST_ERROR_CUTTER + std::to_string(n - 1);
+                    }
+                    continue;
+                }
+
+                // Format the text
+                iteration_text += pattern_text;
+                if(j != current_pattern->children().size() - 1) iteration_text += current_pattern->children_separation();
                 if(current_pattern->text_position() == j + 1) {
-                    if(j == current_pattern->children().size() - 1) to_return += current_pattern->children_separation();
-                    to_return += current_base_text;
-                    if(j != current_pattern->children().size() - 1) to_return += current_pattern->children_separation();
+                    if(j == current_pattern->children().size() - 1) iteration_text += current_pattern->children_separation();
+                    iteration_text += current_base_text;
+                    if(j != current_pattern->children().size() - 1) iteration_text += current_pattern->children_separation();
                 }
             }
 
-            to_return += current_pattern->end_separation();
+            iteration_text += current_pattern->end_separation();
+
+            to_return += iteration_text;
+            computed_iteration++;
         }
+        if(computed_iteration == 0) return "";
 
         return to_return;
     }

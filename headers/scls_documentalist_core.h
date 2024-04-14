@@ -36,11 +36,16 @@
 
 #include <scls_foundation.h>
 
+#define SCLS_DOCUMENTALIST_ERROR_CUTTER std::string("=")
+#define SCLS_DOCUMENTALIST_FORCED_USER_DEFINED_VARIABLE_ERROR std::string("-_\"{<;>" )
 #define VARIABLE_START std::string("<*-")
 #define VARIABLE_END std::string("-*>")
 
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
+
+    // Return if a string contains an another string out of quotes
+    bool contains_out_of_quotes(std::string str, std::string part);
 
     // Returns a string cutted by ignoring quote
     std::vector<std::string> cut_string_out_quotes(std::string string, std::string cut, bool erase_blank = false, bool erase_last_if_blank = true);
@@ -79,6 +84,14 @@ namespace scls {
             if(!contains_children_by_name(child->name())) { a_children.push_back(child); return; }
             print("Warning", "SCLS Documentalist Text Pattern", "The text pattern \"" + name() + "\" where you want to add the child \"" + child->name() + "\" already has that child.");
         };
+        inline void add_forced_user_defined_variable(std::string variable_name) {
+            if(!contains_forced_user_defined_variable(variable_name)) {
+                a_forced_user_defined_variables.push_back(variable_name);
+                return;
+            }
+            print("Warning", "SCLS Documentalist pattern \"" + name() + "\"", "The variable \"" + variable_name + "\" you want to set as forced user defined is already forced.");
+            return;
+        };
         inline _Text_Pattern_Core* _child(std::string pattern_name) {
             for(int i = 0;i<static_cast<int>(a_children.size());i++) {
                 if(a_children[i]->name() == pattern_name) return a_children[i];
@@ -110,6 +123,25 @@ namespace scls {
             return false;
         };
         inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name).size() > 0;};
+        inline bool contains_forced_user_defined_variable(std::string variable_name, bool hierarchical_variables = false, bool hierarchical = false) {
+            std::vector<std::string> to_analyse = forced_user_defined_variables(hierarchical_variables);
+            for(int i = 0;i<static_cast<int>(to_analyse.size());i++) { if(to_analyse[i] == variable_name) return true;}
+            if(hierarchical) {
+                bool to_return = false;
+                for(int i = 0;i<static_cast<int>(children().size()) && !to_return;i++) to_return = to_return || children()[i]->contains_forced_user_defined_variable(variable_name, hierarchical_variables, true);
+                return to_return;
+            }
+            return false;
+        }
+        inline int forced_user_defined_variable_hierarchy(std::string variable_name) {
+            std::vector<std::string> to_analyse = forced_user_defined_variables();
+            for(int i = 0;i<static_cast<int>(to_analyse.size());i++) { if(to_analyse[i] == variable_name) return 0;}
+            if(a_parent != 0) {
+                int result = a_parent->forced_user_defined_variable_hierarchy(variable_name);
+                if(result != -1) return result + 1;
+            }
+            return -1;
+        }
         inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
         std::vector<Text_Pattern_Base_Variable> needed_variables();
 
@@ -119,6 +151,19 @@ namespace scls {
         inline std::string children_separation() const {return a_children_separation;};
         inline std::string default_line_start() const {return a_default_line_start;};
         inline std::string end_separation() const {return a_end_separation;};
+        inline std::vector<std::string> forced_user_defined_variables(bool hierarchical = false) {
+            if(hierarchical) {
+                std::vector<std::string> to_return = a_forced_user_defined_variables;
+                if(a_parent != 0) {
+                    std::vector<std::string> to_add = a_parent->forced_user_defined_variables(true);
+                    for(int i = 0;i<static_cast<int>(to_add.size());i++) {
+                        to_return.push_back(to_add[i]);
+                    }
+                }
+                return to_return;
+            }
+            return a_forced_user_defined_variables;
+        };
         inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
         inline std::string name() const {return a_name;};
         inline void set_children_separation(std::string new_children_separation) {a_children_separation = new_children_separation;};
@@ -146,6 +191,8 @@ namespace scls {
         std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
         // Name of the pattern
         std::string a_name = "";
+        // List of the name of every needed variables
+        std::vector<std::string> a_forced_user_defined_variables = std::vector<std::string>();
         // Parent of this piece
         _Text_Pattern_Core* const a_parent;
         // String of the separation at the start of the pattern

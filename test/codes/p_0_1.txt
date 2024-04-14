@@ -48,18 +48,19 @@ void create_scls_documentalist() {
     scls::Text_Piece* test_cpp = project->new_file("test.cpp", "file_cpp");
     test_cpp->set_pattern_iterations_number("code", 2);
     test_cpp->set_pattern_iterations_number("code_content[0]", 2);
-    test_cpp->set_pattern_iterations_number("code_content[1]", 2);
+    test_cpp->set_pattern_iterations_number("code_content[1]", 1);
     test_cpp->set_variable("file_description", "This file handles the testing of SCLS Documentalist.\nThe test is to recreate the project with SCLS Documentalist.");
     test_cpp->set_variable("file_name_extension", "test.cpp");
     test_cpp->set_variable("file_path", "test.cpp");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[0]", "SCLS Documentalist file which includes each needed files.");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[0]", "\"scls_documentalist.h\"");
 
-    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[0][0]", scls::replace(scls::read_file("test/codes/p_0_0.txt"), "\n\n", "\n"));
-    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[0][1]", scls::replace(scls::read_file("test/codes/p_0_1.txt"), "\n\n", "\n"));
+    std::string c = "\r\n";
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[0][0]", scls::replace(scls::read_file("test/codes/p_0_0.txt"), c, "\n"));
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[0][1]", scls::replace(scls::read_file("test/codes/p_0_1.txt"), c, "\n"));
     test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "[0][0]", "Test the project with a simple Hello World project.");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "[0][1]", "Test the project by remaking it.");
-    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[1][0]", scls::replace(scls::read_file("test/codes/p_1_0.txt"), "\n\n", "\n"));
+    test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[1][0]", scls::replace(scls::read_file("test/codes/p_1_0.txt"), c, "\n"));
     test_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "[1][0]", "Main function of the program.");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE, "[0]", "Testing functions");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE, "[1]", "Mains functions");

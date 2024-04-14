@@ -5,14 +5,14 @@ void create_hello_world() {
     project->set_global_variable(SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE, "Hello World");
 
     scls::Text_Piece* core_cpp = project->new_file("main.cpp", "file_cpp");
-    core_cpp->set_pattern_iterations_number("code_content", 2);
+    core_cpp->set_pattern_iterations_number("code_content[0]", 2);
     core_cpp->set_variable("file_description", "This file contains the main code of the project.");
     core_cpp->set_variable("file_name_extension", "main.cpp");
     core_cpp->set_variable("file_path", "main.cpp");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "Print \"to_print\" in the C++ console.");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "void print(std::string to_print) {\n    std::cout << to_print << std::endl;\n}");
-    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "[1]", "Main function of the program");
-    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[1]", "int main() {\n    print(TEXT);\n}");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART_TITLE, "[0][1]", "Main function of the program");
+    core_cpp->set_variable(SCLS_DOCUMENTALIST_CODE_PART, "[0][1]", "int main() {\n    print(TEXT);\n}");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "Use the in/out C++ functions.");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "<iostream>");
     core_cpp->set_variable(SCLS_DOCUMENTALIST_MACRO_CONTENT, "\"Hello world !\"");

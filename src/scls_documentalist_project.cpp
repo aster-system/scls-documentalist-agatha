@@ -192,17 +192,21 @@ namespace scls {
         pattern += "#include " + VARIABLE_START + SCLS_DOCUMENTALIST_INCLUDE_PATH + VARIABLE_END + "\n";
         start_preprocessor_pattern->new_pattern("include", pattern); pattern = "";
         // Set the macro part
+        Text_Pattern* macro = start_preprocessor_pattern->new_pattern("macro_container", pattern); pattern = "";
+        macro->add_forced_user_defined_variable(SCLS_DOCUMENTALIST_MACRO_NAME);
+        macro->add_forced_user_defined_variable(SCLS_DOCUMENTALIST_MACRO_DESCRIPTION);
+        macro->add_forced_user_defined_variable(SCLS_DOCUMENTALIST_MACRO_CONTENT);
         pattern += "\n" + external_separation_pattern;
         pattern += "//\n";
         pattern += "// Macros definitions\n";
         pattern += "//\n";
         pattern += external_separation_pattern + "\n";
-        start_preprocessor_pattern->new_pattern("macro_title", pattern); pattern = "";
+        macro->new_pattern("macro_title", pattern); pattern = "";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + " -> " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_DESCRIPTION + VARIABLE_END + "\n";
         pattern += "#ifndef " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + "\n";
         pattern += "#define " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + " " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_CONTENT + VARIABLE_END + "\n";
         pattern += "#endif // " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + "\n";
-        start_preprocessor_pattern->new_pattern("macro", pattern); pattern = "";
+        macro->new_pattern("macro", pattern); pattern = "";
         // Set the code part
         pattern += external_separation_pattern;
         pattern += "//\n";
@@ -213,6 +217,7 @@ namespace scls {
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_CODE_PART_TITLE + VARIABLE_END + "\n";
         pattern += VARIABLE_START + SCLS_DOCUMENTALIST_CODE_PART + VARIABLE_END + "\n\n";
         code_pattern->new_pattern("code_content[]", pattern); pattern = "";
+        code_pattern->set_default_line_start("");
 
         // Create header pattern
         project_pattern = project->new_pattern("file_h", "");
@@ -277,17 +282,21 @@ namespace scls {
         pattern += "#include " + VARIABLE_START + SCLS_DOCUMENTALIST_INCLUDE_PATH + VARIABLE_END + "\n";
         start_preprocessor_pattern->new_pattern("include", pattern); pattern = "";
         // Set the macro part
+        macro = start_preprocessor_pattern->new_pattern("macro_main_container", pattern); pattern = "";
+        macro->add_forced_user_defined_variable(SCLS_DOCUMENTALIST_MACRO_NAME);
+        macro->add_forced_user_defined_variable(SCLS_DOCUMENTALIST_MACRO_DESCRIPTION);
+        macro->add_forced_user_defined_variable(SCLS_DOCUMENTALIST_MACRO_CONTENT);
         pattern += "\n" + external_separation_pattern;
         pattern += "//\n";
         pattern += "// Macros definitions\n";
         pattern += "//\n";
         pattern += external_separation_pattern + "\n";
-        start_preprocessor_pattern->new_pattern("macro_title", pattern); pattern = "";
+        macro = macro->new_pattern("macro_container", pattern); pattern = "";
         pattern += "// " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + " -> " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_DESCRIPTION + VARIABLE_END + "\n";
         pattern += "#ifndef " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + "\n";
         pattern += "#define " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + " " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_CONTENT + VARIABLE_END + "\n";
         pattern += "#endif // " + VARIABLE_START + SCLS_DOCUMENTALIST_MACRO_NAME + VARIABLE_END + "\n";
-        start_preprocessor_pattern->new_pattern("macro", pattern); pattern = "";
+        macro->new_pattern("macro", pattern); pattern = "";
         // Set the project last endif
         pattern = "";
         pattern += external_separation_pattern;
