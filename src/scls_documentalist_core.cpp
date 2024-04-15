@@ -360,6 +360,7 @@ namespace scls {
                 _Text_Pattern_Core* child = current_pattern->children()[j];
                 std::string child_name = child->name();
                 std::string child_new_offset = "";
+                int k = 0;
                 while(child_name[child_name.size() - 1] == ']') {
                     std::string child_content = "";
                     child_name = child_name.substr(0, child_name.size() - 1);
@@ -369,11 +370,12 @@ namespace scls {
                     }
                     child_name = child_name.substr(0, child_name.size() - 1);
                     if(child_content == "") {
-                        child_new_offset = "[" + std::to_string(i) + "]" + child_new_offset;
+                        child_new_offset = "[" + std::to_string(iterations[iterations.size() - (k + 1)]) + "]" + child_new_offset;
                     }
                     else if(child_content == ".") {
                         child_new_offset = "[.]" + child_new_offset;
                     }
+                    k++;
                 }
                 // Get the text and handle errors
                 std::string pattern_text = text_with_pattern(child_name + child_new_offset, iterations);

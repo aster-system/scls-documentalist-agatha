@@ -178,6 +178,21 @@ void create_scls_documentalist() {
     test_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE, "[0]", "Testing functions");
     test_cpp->set_variable(SCLS_DOCUMENTALIST_TITLE, "[1]", "Mains functions");
 
+    scls::Text_Piece* organize_irl_h = project->new_file("mods_hidden/organize_irl.h", "file_h");
+    organize_irl_h->set_variable(SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION, "SCLS_DOCUMENTALIST_ORGANIZE_IRL");
+    organize_irl_h->set_variable("file_description", "This file contains some stuff to do some documentation about the organisation of my house IRL.");
+    organize_irl_h->set_variable("file_name_extension", "organize_irl.h");
+    organize_irl_h->set_variable("file_path", "mods_hidden/organize_irl.h");
+    organize_irl_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[0]", "\"../headers/scls_documentalist_project.h\"");
+    organize_irl_h->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[0]", "File containing the project part of the library.");
+
+    scls::Text_Piece* organize_irl_cpp = project->new_file("mods_hidden/organize_irl.cpp", "file_cpp");
+    organize_irl_cpp->set_variable("file_description", "This file contains the source code of organize_irl.h.");
+    organize_irl_cpp->set_variable("file_name_extension", "organize_irl_cpp");
+    organize_irl_cpp->set_variable("file_path", "mods_hidden/organize_irl_cpp");
+    organize_irl_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_PATH, "[0]", "\"organize_irl.h\"");
+    organize_irl_cpp->set_variable(SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION, "[0]", "Header of this file.");
+
     project->save_formatted_as("test/");
 }
 
