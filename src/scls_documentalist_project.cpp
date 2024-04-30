@@ -37,7 +37,7 @@
 namespace scls {
 
     // Most basic Project constructor
-    Project::Project() {
+    Project::Project(std::string name) : a_name(name) {
 
     }
 
@@ -110,7 +110,7 @@ namespace scls {
 
     // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
     Project* cpp_scls_format_project() {
-        Project* project = new Project();
+        Project* project = new Project("cpp");
 
         // Create global variables
         std::string license_description = "";

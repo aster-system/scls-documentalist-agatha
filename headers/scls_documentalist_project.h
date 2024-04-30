@@ -121,7 +121,7 @@ namespace scls {
         // Class representing the entire project
     public:
         // Most basic Project constructor
-        Project();
+        Project(std::string name);
         // Project destructor
         ~Project();
 
