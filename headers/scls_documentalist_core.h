@@ -34,7 +34,12 @@
 #ifndef SCLS_DOCUMENTALIST_CORE
 #define SCLS_DOCUMENTALIST_CORE
 
+// "scls_foundation.h" -> File containing the core of SCLS.
+#ifdef __ASTER_DEV
+#include "../../../scls-foundation-leonhard/scls_foundation.h"
+#else
 #include <scls_foundation.h>
+#endif // __ASTER_DEV
 
 #define SCLS_DOCUMENTALIST_ERROR_CUTTER std::string("=")
 #define SCLS_DOCUMENTALIST_FORCED_USER_DEFINED_VARIABLE_ERROR std::string("-_\"{<;>" )
@@ -166,6 +171,7 @@ namespace scls {
         };
         inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
         inline std::string name() const {return a_name;};
+        inline void set_base_text(std::string new_base_text) {a_base_text = new_base_text;};
         inline void set_children_separation(std::string new_children_separation) {a_children_separation = new_children_separation;};
         inline void set_default_line_start(std::string new_default_line_start) {
             a_default_line_start = new_default_line_start;

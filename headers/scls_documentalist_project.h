@@ -19,6 +19,12 @@
 //
 //******************
 //
+// Project system description
+//
+// In SCLS Documentalist, a project is a set of patterns.
+//
+//******************
+//
 // License (GPLv3)
 //
 // This file is part of scls_documentalist_test.
@@ -103,7 +109,7 @@ namespace scls {
     };
 
     // Returns a code without any comments
-    static std::string remove_comments(std::string code) {
+    inline std::string remove_comments(std::string code) {
 
         // Remove one lines comments
         std::vector<std::string> content = cut_string_out_quotes(code, "\n");

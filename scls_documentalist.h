@@ -63,6 +63,12 @@
 //
 ////////////////////////////
 
+// "scls_foundation.h" -> File containing the core of SCLS.
+#ifdef __ASTER_DEV
+#include "../../scls-foundation-leonhard/scls_foundation.h"
+#else
+#include <scls_foundation.h>
+#endif // __ASTER_DEV
 // "headers/scls_documentalist_core.h" -> File containing the core of the library.
 #include "headers/scls_documentalist_core.h"
 // "headers/scls_documentalist_project.h" -> File allowing to use complex project.
