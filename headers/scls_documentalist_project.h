@@ -108,21 +108,6 @@ namespace scls {
         std::string notice = "This file is part of *.\n\n* is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n* is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\nSee the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with *. If not, see <https://www.gnu.org/licenses/>.";
     };
 
-    // Returns a code without any comments
-    inline std::string remove_comments(std::string code) {
-
-        // Remove one lines comments
-        std::vector<std::string> content = cut_string_out_quotes(code, "\n");
-        std::vector<std::string> final_content = std::vector<std::string>();
-        for(int i = 0;i<static_cast<int>(content.size());i++) {
-            std::string start_line = content[i];
-            std::string line = cut_string_out_quotes(" " + start_line, "//")[0]; line = line.substr(1, line.size() - 1);
-
-            if(line != "")final_content.push_back(line);
-        }
-        return join_string(final_content, "\n");
-    };
-
     class Project {
         // Class representing the entire project
     public:
@@ -140,33 +125,22 @@ namespace scls {
         inline void set_description(std::string new_project_description) {a_description = new_project_description;};
         inline void set_name(std::string new_project_name) {a_name = new_project_name;};
 
-        // Create a file in the project
-        Text_Piece* new_file(std::string name, std::string pattern_name = "file");
         // Create a pattern in the project
         Text_Pattern* new_pattern(std::string pattern_name, std::string base_text);
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
-        inline bool contains_file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i]->name()) { return true; } } return false; };
         inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != "";};
         inline bool contains_pattern_by_name(std::string pattern_name) {return pattern_by_name(pattern_name) != 0; };
-        inline Text_Piece* file_by_path(std::string path) {for(int i = 0;i<static_cast<int>(files().size());i++) {if(path == files()[i]->name()) { return files()[i]; } } return 0; };
         inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
         inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i]->name() == pattern_name) return patterns()[i]; } return 0;};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
-        inline std::vector<Text_Piece*>& files() {return a_files;};
         inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
         inline std::vector<Text_Pattern*>& patterns() {return a_patterns;};
         inline void set_global_variable(std::string variable_name, std::string variable_content) {
             a_global_variables[variable_name] = variable_content;
-            for(int i = 0;i<static_cast<int>(patterns().size());i++) {
-                patterns()[i]->set_global_variable(variable_name, variable_content);
-            }
         };
     private:
-        // Vector of all the files in the project
-        std::vector<Text_Piece*> a_files = std::vector<Text_Piece*>();
-
         // Datas for Agatha
         // Value of each defined global variables
         std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
@@ -181,7 +155,7 @@ namespace scls {
     };
 
     // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
-    Project* cpp_scls_format_project();
+    Project* cpp_scls_format_project(std::string project_name = "cpp");
 }
 
 #endif // SCLS_DOCUMENTALIST_PROJECT
