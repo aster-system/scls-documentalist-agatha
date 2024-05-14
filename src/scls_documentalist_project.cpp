@@ -54,8 +54,8 @@ namespace scls {
         return pattern;
     }
 
-    // Save the project
-    bool Project::save_formatted_as(std::string path) {
+    // Save the project unformatted
+    bool Project::save_sda_0_1(std::string path) {
         if(!std::filesystem::exists(path)) {
             scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The path \"" + path + "\" where you want to save the project does not exist.");
             return false;
@@ -65,6 +65,20 @@ namespace scls {
             scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The path \"" + path + "\" where you want to save the project is not a directory.");
             return false;
         }
+
+        // Save each files
+        std::string all_file_config = "<all_files>";
+        for(int i = 0;i<static_cast<int>(patterns().size());i++) {
+            std::string file_path = path + patterns()[i]->name().to_std_string() + ".sdapf";
+            all_file_config += file_path + ";";
+            scls::write_in_file(file_path, patterns()[i]->base_text());
+        }
+        all_file_config = all_file_config.substr(0, all_file_config.size() - 1);
+
+        // Create the .sda file
+        std::string config_file = "<version>SDA 0.1" + all_file_config;
+        std::string config_file_path = path + name() + ".sda";
+        write_in_file(config_file_path, config_file);
 
         return true;
     }

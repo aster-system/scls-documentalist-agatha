@@ -116,8 +116,8 @@ namespace scls {
         // Project destructor
         ~Project();
 
-        // Save the project
-        bool save_formatted_as(std::string path);
+        // Save the project unformatted
+        bool save_sda_0_1(std::string path);
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string description() const {return a_description;};
