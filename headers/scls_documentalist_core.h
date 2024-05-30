@@ -81,7 +81,7 @@ namespace scls {
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline String base_text() const {return a_base_text;};
         inline String name() const {return a_name;};
-        inline String set_base_text(String new_base_test) {a_base_text = new_base_test;};
+        inline void set_base_text(String new_base_test) {a_base_text = new_base_test;};
     private:
         // Base text
         String a_base_text = "";
