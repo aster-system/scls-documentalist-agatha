@@ -41,6 +41,45 @@ namespace scls {
 
     }
 
+    // Load a project unformatted from sda V0.1
+    Project* Project::load_sda_0_1(std::string path) {
+        if(!std::filesystem::exists(path)) return 0;
+        std::string content = read_file(path);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
+
+        // Get the datas about the project
+        std::vector<std::string> files = std::vector<std::string>();
+        std::string final_name = "";
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0) {
+                if(cutted[i].content[0] == '<') {
+                    // The part of the text is a balise
+                    std::string final_balise_name = balise_name(cutted[i].content);
+                    if(final_balise_name == "name") {
+                        // Get the name of the project
+                        i++; if(i < static_cast<int>(cutted.size())) final_name = cutted[i].content;
+                    }
+                    else if(final_balise_name == "all_files") {
+                        // Get each files in the project
+                        i++; if(i < static_cast<int>(cutted.size())) files = cut_string(cutted[i].content, "?");
+                    }
+                }
+            }
+        }
+        Project* new_project = new Project(final_name);
+
+        // Load each files
+        for(int i = 0;i<static_cast<int>(files.size());i++) {
+            if(std::filesystem::exists(files[i])) {
+                std::string file_content = read_file(files[i]);
+                std::string current_file_name = file_name(files[i]);
+                new_project->new_pattern(current_file_name, file_content);
+            }
+        }
+
+        return new_project;
+    }
+
     // Create a pattern in the project
     Text_Pattern* Project::new_pattern(std::string pattern_name, std::string base_text) {
         if(contains_pattern_by_name(pattern_name)) {
@@ -67,16 +106,19 @@ namespace scls {
         }
 
         // Save each files
-        std::string all_file_config = "<all_files>";
-        for(int i = 0;i<static_cast<int>(patterns().size());i++) {
-            std::string file_path = path + patterns()[i]->name().to_std_string() + ".sdapf";
-            all_file_config += file_path + ";";
-            scls::write_in_file(file_path, patterns()[i]->base_text());
+        std::string all_file_config = "";
+        if(static_cast<int>(patterns().size()) > 0) {
+            all_file_config = "<all_files>";
+            for(int i = 0;i<static_cast<int>(patterns().size());i++) {
+                std::string file_path = path + patterns()[i]->name().to_std_string() + ".sdapf";
+                all_file_config += file_path + "?";
+                scls::write_in_file(file_path, patterns()[i]->base_text());
+            }
+            all_file_config = all_file_config.substr(0, all_file_config.size() - 1);
         }
-        all_file_config = all_file_config.substr(0, all_file_config.size() - 1);
 
         // Create the .sda file
-        std::string config_file = "<version>SDA 0.1" + all_file_config;
+        std::string config_file = "<name>" + name() + "<version>SDA 0.1" + all_file_config;
         std::string config_file_path = path + name() + ".sda";
         write_in_file(config_file_path, config_file);
 

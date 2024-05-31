@@ -116,6 +116,8 @@ namespace scls {
         // Project destructor
         ~Project();
 
+        // Load a project unformatted from sda V0.1
+        static Project* load_sda_0_1(std::string path);
         // Save the project unformatted
         bool save_sda_0_1(std::string path);
 
