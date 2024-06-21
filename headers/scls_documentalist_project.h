@@ -108,22 +108,34 @@ namespace scls {
         std::string notice = "This file is part of *.\n\n* is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n* is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\nSee the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with *. If not, see <https://www.gnu.org/licenses/>.";
     };
 
-    class Project {
+    struct Replica_File {
+        // Struct representing a file in a replica project
+
+        // Internal path of the file
+        std::string internal_path = "";
+        // Pattern use by the file
+        Text_Pattern* pattern = 0;
+    };
+
+    class Pattern_Project {
         // Class representing the entire project
     public:
-        // Most basic Project constructor
-        Project(std::string name);
-        // Project destructor
-        ~Project();
+        // Most basic Pattern_Project constructor
+        Pattern_Project(std::string name, std::string path);
+        // Pattern_Project destructor
+        ~Pattern_Project();
 
+        // Returns the content of a file
+        std::string file_content(Replica_File& file);
         // Load a project unformatted from sda V0.1
-        static Project* load_sda_0_1(std::string path);
+        static Pattern_Project* load_sda_0_1(std::string path);
         // Save the project unformatted
         bool save_sda_0_1(std::string path);
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string description() const {return a_description;};
         inline std::string name() const {return a_name;};
+        inline std::string path() const {return a_path;};
         inline void set_description(std::string new_project_description) {a_description = new_project_description;};
         inline void set_name(std::string new_project_name) {a_name = new_project_name;};
 
@@ -132,6 +144,7 @@ namespace scls {
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
         inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != "";};
+        inline bool contains_pattern(Text_Pattern* pattern) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i] == pattern) return true; } return false; };
         inline bool contains_pattern_by_name(std::string pattern_name) {return pattern_by_name(pattern_name) != 0; };
         inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
         inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i]->name() == pattern_name) return patterns()[i]; } return 0;};
@@ -154,10 +167,56 @@ namespace scls {
         std::string a_description = "";
         // Name of the project
         std::string a_name = "";
+        // Path of the project
+        std::string a_path = "";
+    };
+
+    class Replica_Project {
+        // Class representing the entire project
+    public:
+        // Most basic Replica_Project constructor
+        Replica_Project(std::string name, const std::shared_ptr<Pattern_Project>& pattern);
+
+        // Add a replica file to the project
+        Replica_File* add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern);
+        // Exports the project
+        bool export_project(std::string path);
+        // Returns a replica file by its path, or 0 if there is no this path
+        Replica_File* replica_file_by_path(std::string replica_file_path) {
+            for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
+                if(replica_files()[i].internal_path == replica_file_path) return &(replica_files()[i]);
+            }
+            return 0;
+        };
+        // Load a replica file in the project from sda V 0.2
+        void load_replica_file_sda_0_2(std::string path);
+        // Load the project from sda V 0.2
+        static Replica_Project* load_sda_0_2(std::string path, const std::shared_ptr<Pattern_Project>& pattern);
+        // Returns the path of the attached patter in a replica
+        static std::string replica_attached_pattern_from_path_sda_0_2(std::string path);
+        // Returns the text to save a replica file
+        std::string save_replica_file_text_sda_0_2(Replica_File& replica_file);
+        // Save the project unformatted
+        bool save_sda_0_2(std::string path);
+
+        // Getters and setters
+        inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
+        inline std::vector<Replica_File>& replica_files() {return a_replica_files;};
+        inline std::string name() const {return a_name;};
+    private:
+        // Datas about the replica project
+        // Description of the replica project
+        std::string a_description = "";
+        // Name of the replica project
+        std::string a_name = "";
+        // Pattern attached to the project
+        std::shared_ptr<Pattern_Project> a_pattern;
+        // Value of each defined files
+        std::vector<Replica_File> a_replica_files = std::vector<Replica_File>();
     };
 
     // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
-    Project* cpp_scls_format_project(std::string project_name = "cpp");
+    Pattern_Project* cpp_scls_format_project(std::string project_name = "cpp", std::string project_path = "");
 }
 
 #endif // SCLS_DOCUMENTALIST_PROJECT

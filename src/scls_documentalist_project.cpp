@@ -36,13 +36,35 @@
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
-    // Most basic Project constructor
-    Project::Project(std::string name) : a_name(name) {
+    // Most basic Pattern_Project constructor
+    Pattern_Project::Pattern_Project(std::string name, std::string path) : a_name(name), a_path(path) { }
 
+    // Returns the content of a file
+    std::string Pattern_Project::file_content(Replica_File& file) {
+        std::string to_return = "";
+        if(!contains_pattern(file.pattern)) return to_return;
+
+        // Format the text
+        std::string base_pattern_content = file.pattern->base_text().to_std_string();
+        int level = 0;
+        std::string pattern_content = "";
+        for(int i = 0;i<static_cast<int>(base_pattern_content.size());i++) {
+            if(base_pattern_content[i] == '<') level++;
+            else if(base_pattern_content[i] == '>') level--;
+            else if(level <= 0) pattern_content += base_pattern_content[i];
+        }
+
+        // Use the variable
+        pattern_content = format_string_as_plain_text(pattern_content);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(pattern_content);
+
+        to_return = pattern_content;
+
+        return to_return;
     }
 
     // Load a project unformatted from sda V0.1
-    Project* Project::load_sda_0_1(std::string path) {
+    Pattern_Project* Pattern_Project::load_sda_0_1(std::string path) {
         if(!std::filesystem::exists(path)) return 0;
         std::string content = read_file(path);
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
@@ -66,7 +88,7 @@ namespace scls {
                 }
             }
         }
-        Project* new_project = new Project(final_name);
+        Pattern_Project* new_project = new Pattern_Project(final_name, path);
 
         // Load each files
         for(int i = 0;i<static_cast<int>(files.size());i++) {
@@ -81,7 +103,7 @@ namespace scls {
     }
 
     // Create a pattern in the project
-    Text_Pattern* Project::new_pattern(std::string pattern_name, std::string base_text) {
+    Text_Pattern* Pattern_Project::new_pattern(std::string pattern_name, std::string base_text) {
         if(contains_pattern_by_name(pattern_name)) {
             scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The pattern \"" + pattern_name + "\" you want to add already exist in the project.");
             return 0;
@@ -94,7 +116,7 @@ namespace scls {
     }
 
     // Save the project unformatted
-    bool Project::save_sda_0_1(std::string path) {
+    bool Pattern_Project::save_sda_0_1(std::string path) {
         if(!std::filesystem::exists(path)) {
             scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The path \"" + path + "\" where you want to save the project does not exist.");
             return false;
@@ -126,8 +148,8 @@ namespace scls {
     }
 
     // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
-    Project* cpp_scls_format_project(std::string project_name) {
-        Project* project = new Project(project_name);
+    Pattern_Project* cpp_scls_format_project(std::string project_name, std::string project_path) {
+        Pattern_Project* project = new Pattern_Project(project_name, project_path);
 
         // Create global variables
         std::string license_description = "";
@@ -274,10 +296,203 @@ namespace scls {
         return project;
     };
 
-    // Project destructor
-    Project::~Project() {
+    // Pattern_Project destructor
+    Pattern_Project::~Pattern_Project() {
         for(int i = 0;i<static_cast<int>(patterns().size());i++) {
             delete patterns()[i]; patterns()[i] = 0;
         } patterns().clear();
+    }
+
+    // Most basic Replica_Project constructor
+    Replica_Project::Replica_Project(std::string name, const std::shared_ptr<Pattern_Project>& pattern) : a_name(name), a_pattern(pattern) {
+
+    }
+
+    // Add a replica file to the project
+    Replica_File* Replica_Project::add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern) {
+        if(replica_file_by_path(replica_file_path) != 0) return 0;
+
+        // Create the file
+        replica_files().push_back(Replica_File());
+        Replica_File& new_replica = replica_files()[replica_files().size() - 1];
+        new_replica.internal_path = replica_file_path;
+        new_replica.pattern = pattern;
+
+        return &new_replica;
+    }
+
+    // Exports the project
+    bool Replica_Project::export_project(std::string path) {
+        if(!std::filesystem::exists(path)) {
+            scls::print("Warning", "SCLS Documentalist replica \"" + name() + "\" export", "The path \"" + path + "\" where you want to export the replica does not exist.");
+            return false;
+        }
+
+        if(!std::filesystem::is_directory(path)) {
+            scls::print("Warning", "SCLS Documentalist replica \"" + name() + "\" export", "The path \"" + path + "\" where you want to export the replica is not a directory.");
+            return false;
+        }
+
+        // Create the directory
+        if(path[path.size() - 1] != '/') path += "/";
+        path += name() + "_export/";
+        if(!std::filesystem::exists(path)) std::filesystem::create_directory(path);
+
+        // Export each files
+        for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
+            Replica_File& current_file = replica_files()[i];
+
+            // Format the needed path
+            std::string current_path = current_file.internal_path;
+            std::vector<std::string> path_cutted = cut_string(current_path, "/"); current_path = path;
+            for(int i = 0;i<static_cast<int>(path_cutted.size()) - 1;i++) {
+                current_path += path_cutted[i] + "/";
+                if(!std::filesystem::exists(current_path)) std::filesystem::create_directory(current_path);
+            }
+
+            // Write the file
+            current_path += path_cutted[path_cutted.size() - 1];
+            write_in_file(current_path, attached_pattern()->file_content(current_file));
+        }
+
+        return true;
+    }
+
+    // Load a replica file in the project from sda V 0.2
+    void Replica_Project::load_replica_file_sda_0_2(std::string path) {
+        if(!std::filesystem::exists(path)) return;
+        std::string content = read_file(path);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
+
+        // Get the datas about the file
+        std::string internal_path = "";
+        std::string pattern = "";
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0) {
+                if(cutted[i].content[0] == '<') {
+                    // The part of the text is a balise
+                    std::string final_balise_name = balise_name(cutted[i].content);
+                    if(final_balise_name == "internal_path") {
+                        // Get the name of the project
+                        i++; if(i < static_cast<int>(cutted.size())) internal_path = cutted[i].content;
+                    }
+                    else if(final_balise_name == "pattern") {
+                        // Get the pattern of the project
+                        i++; if(i < static_cast<int>(cutted.size())) pattern = cutted[i].content;
+                    }
+                }
+            }
+        }
+
+        // Load the file
+        Text_Pattern* final_pattern = attached_pattern()->pattern_by_name(pattern);
+        if(final_pattern == 0) return;
+        add_replica_file(internal_path, final_pattern);
+    }
+
+    // Load the project from sda V 0.2
+    Replica_Project* Replica_Project::load_sda_0_2(std::string path, const std::shared_ptr<Pattern_Project>& pattern) {
+        if(!std::filesystem::exists(path)) return 0;
+        std::string content = read_file(path);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
+        path = path_parent(path);
+
+        // Get the datas about the project
+        std::vector<std::string> files = std::vector<std::string>();
+        std::string final_name = "";
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0) {
+                if(cutted[i].content[0] == '<') {
+                    // The part of the text is a balise
+                    std::string final_balise_name = balise_name(cutted[i].content);
+                    if(final_balise_name == "name") {
+                        // Get the name of the project
+                        i++; if(i < static_cast<int>(cutted.size())) final_name = cutted[i].content;
+                    }
+                    else if(final_balise_name == "all_files") {
+                        // Get the name of the project
+                        i++; if(i < static_cast<int>(cutted.size())) files = cut_string(cutted[i].content, ";");
+                    }
+                }
+            }
+        }
+
+        Replica_Project* new_project = new Replica_Project(final_name, pattern);
+
+        // Create each file
+        for(int i = 0;i<static_cast<int>(files.size());i++) {
+            new_project->load_replica_file_sda_0_2(path + "/" + files[i]);
+        }
+
+        return new_project;
+    }
+
+    // Returns the path of the attached patter in a replica
+    std::string Replica_Project::replica_attached_pattern_from_path_sda_0_2(std::string path) {
+        if(!std::filesystem::exists(path)) return 0;
+        std::string content = read_file(path);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
+
+        // Get the datas about the project
+        std::vector<std::string> files = std::vector<std::string>();
+        std::string final_name = "";
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0) {
+                if(cutted[i].content[0] == '<') {
+                    // The part of the text is a balise
+                    std::string final_balise_name = balise_name(cutted[i].content);
+                    if(final_balise_name == "pattern_path") {
+                        // Get the path of pattern of the project
+                        i++; if(i < static_cast<int>(cutted.size())) return cutted[i].content; else return "";
+                    }
+                }
+            }
+        }
+
+        return "";
+    }
+
+    // Returns the text to save a replica file
+    std::string Replica_Project::save_replica_file_text_sda_0_2(Replica_File& replica_file) {
+        std::string to_return = "<internal_path>" + replica_file.internal_path;
+        to_return += "<pattern>" + replica_file.pattern->name().to_std_string();
+        return to_return;
+    }
+
+    // Save the project unformatted
+    bool Replica_Project::save_sda_0_2(std::string path) {
+        if(!std::filesystem::exists(path)) {
+            scls::print("Warning", "SCLS Documentalist replica project \"" + name() + "\"", "The path \"" + path + "\" where you want to save the project does not exist.");
+            return false;
+        }
+
+        if(!std::filesystem::is_directory(path)) {
+            scls::print("Warning", "SCLS Documentalist replica project \"" + name() + "\"", "The path \"" + path + "\" where you want to save the project is not a directory.");
+            return false;
+        }
+
+        // Create each files
+        std::string files_content = "";
+        if(replica_files().size() > 0) {
+            // Save the files in the main file
+            files_content += "<all_files>";
+            for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
+                files_content += name() + std::to_string(i) + ".sdrf";
+                if(i != static_cast<int>(replica_files().size()) - 1) files_content += ";";
+            }
+
+            // Create each files
+            for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
+                std::string file_path = path + name() + std::to_string(i) + ".sdrf";
+                write_in_file(file_path, save_replica_file_text_sda_0_2(replica_files()[i]));
+            }
+        }
+
+        // Create the .sdr file
+        std::string config_file = "<name>" + name() + "<version>SDA 0.2<pattern_path>" + attached_pattern()->path() + files_content;
+        std::string config_file_path = path + name() + ".sdr";
+        write_in_file(config_file_path, config_file);
+
+        return true;
     }
 }
