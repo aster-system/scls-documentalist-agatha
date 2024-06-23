@@ -99,7 +99,33 @@ namespace scls {
             }
         }
 
+        new_project->parse_project();
         return new_project;
+    }
+
+    // Parse the entire project
+    void Pattern_Project::parse_project() {
+        a_global_variables.clear();
+
+        // Get each global variables
+        for(int i = 0;i<static_cast<int>(patterns().size());i++) {
+            patterns()[i].get()->parse_pattern();
+            std::vector<std::shared_ptr<Pattern_Variable>>& current_global_variables = patterns()[i].get()->global_variables();
+
+            // Analyse each variables
+            for(int j = 0;j<static_cast<int>(current_global_variables.size());j++) {
+                bool is_already_loaded = false;
+                for(int k = 0;k<static_cast<int>(a_global_variables.size());k++) {
+                    if(a_global_variables[k].get()->name == current_global_variables[j].get()->name) {
+                        is_already_loaded = true;
+                    }
+                }
+
+                if(!is_already_loaded) {
+                    a_global_variables.push_back(current_global_variables[j]);
+                }
+            }
+        }
     }
 
     // Create a pattern in the project
@@ -109,10 +135,10 @@ namespace scls {
             return 0;
         }
 
-        Text_Pattern* pattern = new Text_Pattern(pattern_name, base_text);
+        std::shared_ptr<Text_Pattern> pattern = std::make_shared<Text_Pattern>(pattern_name, base_text);
 
         patterns().push_back(pattern);
-        return pattern;
+        return pattern.get();
     }
 
     // Save the project unformatted
@@ -147,7 +173,7 @@ namespace scls {
         return true;
     }
 
-    // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
+    /*// Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
     Pattern_Project* cpp_scls_format_project(std::string project_name, std::string project_path) {
         Pattern_Project* project = new Pattern_Project(project_name, project_path);
 
@@ -172,7 +198,7 @@ namespace scls {
         project->set_global_variable(SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE, project_description);
         project->set_global_variable(SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE, "SCLS Documentalist");
 
-        std::string big_separation_pattern = "\n\n////////////////////////////////////////////////////////\n//****************************************************//\n////////////////////////////////////////////////////////\n\n\n";
+        std::string big_separation_pattern = "\n\n////////////////////////////////////////////////////////\n//****************************************************\n////////////////////////////////////////////////////////\n\n\n";
         std::string external_separation_pattern = "////////////////////////////\n";
         std::string separation_pattern = "//******************\n";
         std::string pattern = "";
@@ -294,14 +320,10 @@ namespace scls {
         project_pattern = project->new_pattern("file_h", pattern);
 
         return project;
-    };
+    }; //*/
 
     // Pattern_Project destructor
-    Pattern_Project::~Pattern_Project() {
-        for(int i = 0;i<static_cast<int>(patterns().size());i++) {
-            delete patterns()[i]; patterns()[i] = 0;
-        } patterns().clear();
-    }
+    Pattern_Project::~Pattern_Project() { }
 
     // Most basic Replica_Project constructor
     Replica_Project::Replica_Project(std::string name, const std::shared_ptr<Pattern_Project>& pattern) : a_name(name), a_pattern(pattern) {

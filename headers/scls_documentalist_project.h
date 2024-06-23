@@ -125,6 +125,9 @@ namespace scls {
         // Pattern_Project destructor
         ~Pattern_Project();
 
+        // Parse the entire project
+        void parse_project();
+
         // Returns the content of a file
         std::string file_content(Replica_File& file);
         // Load a project unformatted from sda V0.1
@@ -143,24 +146,21 @@ namespace scls {
         Text_Pattern* new_pattern(std::string pattern_name, std::string base_text);
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
-        inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != "";};
-        inline bool contains_pattern(Text_Pattern* pattern) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i] == pattern) return true; } return false; };
+        inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != 0;};
+        inline bool contains_pattern(Text_Pattern* pattern) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i].get() == pattern) return true; } return false; };
         inline bool contains_pattern_by_name(std::string pattern_name) {return pattern_by_name(pattern_name) != 0; };
-        inline std::string global_variable(std::string variable_name) {for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++){if(it->first == variable_name){return it->second;}}return "";};
-        inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i]->name() == pattern_name) return patterns()[i]; } return 0;};
+        inline std::shared_ptr<Pattern_Variable>* global_variable(std::string variable_name) {for(int i = 0;i<static_cast<int>(a_global_variables.size());i++){if(a_global_variables[i].get()->name == variable_name){return &(a_global_variables[i]);}}return 0;};
+        inline Text_Pattern* pattern_by_name(std::string pattern_name) {for(int i = 0;i<static_cast<int>(patterns().size());i++){ if(patterns()[i].get()->name() == pattern_name) return patterns()[i].get(); } return 0;};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
-        inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
-        inline std::vector<Text_Pattern*>& patterns() {return a_patterns;};
-        inline void set_global_variable(std::string variable_name, std::string variable_content) {
-            a_global_variables[variable_name] = variable_content;
-        };
+        inline std::vector<std::shared_ptr<Pattern_Variable>>& global_variables() {return a_global_variables;};
+        inline std::vector<std::shared_ptr<Text_Pattern>>& patterns() {return a_patterns;};
     private:
         // Datas for Agatha
         // Value of each defined global variables
-        std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
+        std::vector<std::shared_ptr<Pattern_Variable>> a_global_variables = std::vector<std::shared_ptr<Pattern_Variable>>();
         // Each defined patterns
-        std::vector<Text_Pattern*> a_patterns = std::vector<Text_Pattern*>();
+        std::vector<std::shared_ptr<Text_Pattern>> a_patterns = std::vector<std::shared_ptr<Text_Pattern>>();
 
         // Datas about the project
         // Description of the project
@@ -201,12 +201,15 @@ namespace scls {
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
+        inline std::map<std::string, std::string>& global_variables_values() {return a_global_variables_values;};
         inline std::vector<Replica_File>& replica_files() {return a_replica_files;};
         inline std::string name() const {return a_name;};
     private:
         // Datas about the replica project
         // Description of the replica project
         std::string a_description = "";
+        // Values of the global variable
+        std::map<std::string, std::string> a_global_variables_values = std::map<std::string, std::string>();
         // Name of the replica project
         std::string a_name = "";
         // Pattern attached to the project
@@ -216,7 +219,7 @@ namespace scls {
     };
 
     // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
-    Pattern_Project* cpp_scls_format_project(std::string project_name = "cpp", std::string project_path = "");
+    // Pattern_Project* cpp_scls_format_project(std::string project_name = "cpp", std::string project_path = "");
 }
 
 #endif // SCLS_DOCUMENTALIST_PROJECT

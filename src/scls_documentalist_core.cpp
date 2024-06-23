@@ -43,6 +43,47 @@ namespace scls {
 
     }
 
+    // Parse the text in the pattern
+    void Text_Pattern::parse_pattern() {
+        // Cut the text
+        global_variables().clear(); variables().clear();
+        std::vector<_Text_Balise_Part> cutted = base_text().formatted_as_plain_text().cut_by_balise();
+
+        // Analyse each balises
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
+                // The part is a balise
+                std::string current_balise = formatted_balise(cutted[i].content);
+                std::string current_balise_name = balise_name(current_balise);
+                // Remove the < and >
+                current_balise = current_balise.substr(1, current_balise.size() - 2);
+                if(current_balise_name == "scls_var") {
+                    // The part is a SCLS variable
+                    std::shared_ptr<Pattern_Variable> new_variable = std::make_shared<Pattern_Variable>();
+                    new_variable.get()->content = current_balise;
+
+                    // Analyse the variable
+                    bool global = false;
+                    std::vector<std::string> cutted_variable = cut_string(current_balise, " ");
+                    for(int i = 1;i<static_cast<int>(cutted_variable.size());i++) {
+                        if(cutted_variable[i] == "global") {
+                            // The variable is global
+                            global = true;
+                        }
+                        else if(i == 1) {
+                            // The name of the variable
+                            new_variable.get()->name = cutted_variable[i];
+                        }
+                    }
+
+                    new_variable.get()->global = global;
+                    variables().push_back(new_variable);
+                    if(global) global_variables().push_back(new_variable);
+                }
+            }
+        }
+    }
+
     // Text_Pattern destructor
     Text_Pattern::~Text_Pattern() {
 

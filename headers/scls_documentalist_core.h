@@ -52,18 +52,20 @@
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
-    struct Text_Pattern_Base_Variable {
+    struct Pattern_Variable {
         // Struct representing a variable in a text pattern
         // Content if the variable
         std::string content = "";
+        // If the variable is global or not
+        bool global = false;
         // Start of a line if a break of line occurs
         std::string line_start = "";
         // Name of the variable
         std::string name = "";
     };
 
-    // Know easily if a std::vector<Text_Pattern_Base_Variable> contains a variable by name or not
-    inline bool _contains_pattern_variable_by_name(std::vector<Text_Pattern_Base_Variable>& to_test, std::string variable_name) {
+    // Know easily if a std::vector<Pattern_Variable> contains a variable by name or not
+    inline bool _contains_pattern_variable_by_name(std::vector<Pattern_Variable>& to_test, std::string variable_name) {
         for(int i = 0;i<static_cast<int>(to_test.size());i++) {
             if(to_test[i].name == variable_name) return true;
         }
@@ -78,15 +80,25 @@ namespace scls {
         // Text_Pattern destructor
         virtual ~Text_Pattern();
 
+        // Parse the text in the pattern
+        void parse_pattern();
+
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline String base_text() const {return a_base_text;};
+        inline std::vector<std::shared_ptr<Pattern_Variable>>& global_variables() {return a_global_variables;};
         inline String name() const {return a_name;};
         inline void set_base_text(String new_base_test) {a_base_text = new_base_test;};
+        inline std::vector<std::shared_ptr<Pattern_Variable>>& variables() {return a_variables;};
     private:
         // Base text
         String a_base_text = "";
         // Name of the pattern
         String a_name = "";
+
+        // Global variables loaded
+        std::vector<std::shared_ptr<Pattern_Variable>> a_global_variables;
+        // Variables loaded
+        std::vector<std::shared_ptr<Pattern_Variable>> a_variables;
     };
 }
 
