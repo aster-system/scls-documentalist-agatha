@@ -64,6 +64,9 @@ namespace scls {
         std::string name = "";
     };
 
+    // Analyse a pattern variable
+    Pattern_Variable analyse_pattern_variable(std::string content);
+
     // Know easily if a std::vector<Pattern_Variable> contains a variable by name or not
     inline bool _contains_pattern_variable_by_name(std::vector<Pattern_Variable>& to_test, std::string variable_name) {
         for(int i = 0;i<static_cast<int>(to_test.size());i++) {

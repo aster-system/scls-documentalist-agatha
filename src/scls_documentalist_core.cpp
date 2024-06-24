@@ -38,6 +38,30 @@
 
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
+    // Analyse a pattern variable
+    Pattern_Variable analyse_pattern_variable(std::string content) {
+        // The part is a SCLS variable
+        Pattern_Variable new_variable;
+        new_variable.content = content;
+
+        // Analyse the variable
+        bool global = false;
+        std::vector<std::string> cutted_variable = cut_string(content, " ");
+        for(int i = 1;i<static_cast<int>(cutted_variable.size());i++) {
+            if(cutted_variable[i] == "global") {
+                // The variable is global
+                global = true;
+            }
+            else if(i == 1) {
+                // The name of the variable
+                new_variable.name = cutted_variable[i];
+            }
+        }
+
+        new_variable.global = global;
+        return new_variable;
+    }
+
     // Most basic _Text_Pattern_Core constructor
     Text_Pattern::Text_Pattern(String name, String base_text) : a_name(name), a_base_text(base_text) {
 
@@ -59,26 +83,9 @@ namespace scls {
                 current_balise = current_balise.substr(1, current_balise.size() - 2);
                 if(current_balise_name == "scls_var") {
                     // The part is a SCLS variable
-                    std::shared_ptr<Pattern_Variable> new_variable = std::make_shared<Pattern_Variable>();
-                    new_variable.get()->content = current_balise;
-
-                    // Analyse the variable
-                    bool global = false;
-                    std::vector<std::string> cutted_variable = cut_string(current_balise, " ");
-                    for(int i = 1;i<static_cast<int>(cutted_variable.size());i++) {
-                        if(cutted_variable[i] == "global") {
-                            // The variable is global
-                            global = true;
-                        }
-                        else if(i == 1) {
-                            // The name of the variable
-                            new_variable.get()->name = cutted_variable[i];
-                        }
-                    }
-
-                    new_variable.get()->global = global;
+                    std::shared_ptr<Pattern_Variable> new_variable = std::make_shared<Pattern_Variable>(analyse_pattern_variable(current_balise));
                     variables().push_back(new_variable);
-                    if(global) global_variables().push_back(new_variable);
+                    if(new_variable.get()->global) global_variables().push_back(new_variable);
                 }
             }
         }

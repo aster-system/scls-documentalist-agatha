@@ -57,8 +57,31 @@ namespace scls {
         // Use the variable
         pattern_content = format_string_as_plain_text(pattern_content);
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(pattern_content);
-
-        to_return = pattern_content;
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
+                // The part is a balise
+                std::string current_balise_formated = formatted_balise(cutted[i].content);
+                std::string current_balise_name = balise_name(current_balise_formated);
+                if(current_balise_name == "scls_var") {
+                    // Remove the < and >
+                    current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
+                    Pattern_Variable current_variable = analyse_pattern_variable(current_balise_formated);
+                    if(current_variable.global) {
+                        // The variable is global
+                        to_return += file.global_variables.get()->global_variable_value(current_variable.name);
+                    }
+                    else {
+                        to_return += "VARIABLE";
+                    }
+                }
+                else {
+                    to_return += cutted[i].content;
+                }
+            }
+            else {
+                to_return += cutted[i].content;
+            }
+        }
 
         return to_return;
     }
@@ -129,7 +152,7 @@ namespace scls {
     }
 
     // Create a pattern in the project
-    Text_Pattern* Pattern_Project::new_pattern(std::string pattern_name, std::string base_text) {
+    std::shared_ptr<Text_Pattern>* Pattern_Project::new_pattern(std::string pattern_name, std::string base_text) {
         if(contains_pattern_by_name(pattern_name)) {
             scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The pattern \"" + pattern_name + "\" you want to add already exist in the project.");
             return 0;
@@ -138,7 +161,7 @@ namespace scls {
         std::shared_ptr<Text_Pattern> pattern = std::make_shared<Text_Pattern>(pattern_name, base_text);
 
         patterns().push_back(pattern);
-        return pattern.get();
+        return &patterns()[patterns().size() - 1];
     }
 
     // Save the project unformatted
@@ -326,7 +349,7 @@ namespace scls {
     Pattern_Project::~Pattern_Project() { }
 
     // Most basic Replica_Project constructor
-    Replica_Project::Replica_Project(std::string name, const std::shared_ptr<Pattern_Project>& pattern) : a_name(name), a_pattern(pattern) {
+    Replica_Project::Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern) : a_name(name), a_path(path), a_pattern(pattern) {
 
     }
 
@@ -335,7 +358,7 @@ namespace scls {
         if(replica_file_by_path(replica_file_path) != 0) return 0;
 
         // Create the file
-        replica_files().push_back(Replica_File());
+        replica_files().push_back(Replica_File(a_global_variables_values));
         Replica_File& new_replica = replica_files()[replica_files().size() - 1];
         new_replica.internal_path = replica_file_path;
         new_replica.pattern = pattern;
@@ -439,7 +462,7 @@ namespace scls {
             }
         }
 
-        Replica_Project* new_project = new Replica_Project(final_name, pattern);
+        Replica_Project* new_project = new Replica_Project(final_name, path, pattern);
 
         // Create each file
         for(int i = 0;i<static_cast<int>(files.size());i++) {
@@ -493,6 +516,9 @@ namespace scls {
             return false;
         }
 
+        if(path[path.size() - 1] != '/') path += "/";
+        unsigned int total_file_number = 0;
+
         // Create each files
         std::string files_content = "";
         if(replica_files().size() > 0) {
@@ -508,10 +534,31 @@ namespace scls {
                 std::string file_path = path + name() + std::to_string(i) + ".sdrf";
                 write_in_file(file_path, save_replica_file_text_sda_0_2(replica_files()[i]));
             }
+            total_file_number += replica_files().size();
+        }
+
+        // Create each global variables
+        std::string global_variables_content = "";
+        std::cout << "L " << global_variables_values().size() << std::endl;
+        if(global_variables_values().size() > 0) {
+            // Save the global variabless in the main file
+            global_variables_content += "<all_global_variables>";
+            for(int i = 0;i<static_cast<int>(global_variables_values().size());i++) {
+                global_variables_content += name() + std::to_string(i + total_file_number) + ".sdrf";
+                if(i != static_cast<int>(global_variables_values().size()) - 1) files_content += ";";
+            }
+
+            // Create each files
+            int i = 0;
+            for(std::map<std::string, std::string>::iterator it = global_variables_values().begin();it!=global_variables_values().end();it++) {
+                std::string file_path = path + name() + std::to_string(i + total_file_number) + ".sdrf";
+                write_in_file(file_path, it->first + ";" + it->second); i++;
+            }
+            total_file_number += global_variables_values().size();
         }
 
         // Create the .sdr file
-        std::string config_file = "<name>" + name() + "<version>SDA 0.2<pattern_path>" + attached_pattern()->path() + files_content;
+        std::string config_file = "<name>" + name() + "<version>SDA 0.2<pattern_path>" + attached_pattern()->path() + files_content + global_variables_content;
         std::string config_file_path = path + name() + ".sdr";
         write_in_file(config_file_path, config_file);
 

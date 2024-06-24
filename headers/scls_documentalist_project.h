@@ -108,9 +108,34 @@ namespace scls {
         std::string notice = "This file is part of *.\n\n* is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n* is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\nSee the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with *. If not, see <https://www.gnu.org/licenses/>.";
     };
 
+    class __Variables_Value_Container {
+        // Class representing a container of variable
+    public:
+        // __Variables_Value_Container constructor
+        __Variables_Value_Container(){};
+        // __Variables_Value_Container destructor
+        ~__Variables_Value_Container(){};
+
+        // Returns the value of a global variable, or ""
+        inline std::string global_variable_value(std::string variable) {
+            for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++) { if(it->first == variable) return it->second; } return "";
+        };
+
+        // Getters and setters
+        inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
+    private:
+
+        // Values of the global variable in the replica project
+        std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
+    };
+
     struct Replica_File {
         // Struct representing a file in a replica project
+        // Constructor
+        Replica_File(const std::shared_ptr<__Variables_Value_Container>& replica_project_global_variables) : global_variables(replica_project_global_variables) { };
 
+        // Values of the global variable in the replica project
+        std::shared_ptr<__Variables_Value_Container> global_variables;
         // Internal path of the file
         std::string internal_path = "";
         // Pattern use by the file
@@ -143,7 +168,7 @@ namespace scls {
         inline void set_name(std::string new_project_name) {a_name = new_project_name;};
 
         // Create a pattern in the project
-        Text_Pattern* new_pattern(std::string pattern_name, std::string base_text);
+        std::shared_ptr<Text_Pattern>* new_pattern(std::string pattern_name, std::string base_text);
 
         // Getters and setters (ONLY WITHOUT ATTRIBUTES)
         inline bool contains_global_variable(std::string variable_name)  {return global_variable(variable_name) != 0;};
@@ -175,7 +200,7 @@ namespace scls {
         // Class representing the entire project
     public:
         // Most basic Replica_Project constructor
-        Replica_Project(std::string name, const std::shared_ptr<Pattern_Project>& pattern);
+        Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern);
 
         // Add a replica file to the project
         Replica_File* add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern);
@@ -201,17 +226,20 @@ namespace scls {
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
-        inline std::map<std::string, std::string>& global_variables_values() {return a_global_variables_values;};
-        inline std::vector<Replica_File>& replica_files() {return a_replica_files;};
+        inline std::map<std::string, std::string>& global_variables_values() {return a_global_variables_values.get()->global_variables();};
+        inline std::string path() const {return a_path;};
         inline std::string name() const {return a_name;};
+        inline std::vector<Replica_File>& replica_files() {return a_replica_files;};
     private:
         // Datas about the replica project
         // Description of the replica project
         std::string a_description = "";
         // Values of the global variable
-        std::map<std::string, std::string> a_global_variables_values = std::map<std::string, std::string>();
+        std::shared_ptr<__Variables_Value_Container> a_global_variables_values = std::make_shared<__Variables_Value_Container>();
         // Name of the replica project
         std::string a_name = "";
+        // Path of the project
+        std::string a_path = "";
         // Pattern attached to the project
         std::shared_ptr<Pattern_Project> a_pattern;
         // Value of each defined files
