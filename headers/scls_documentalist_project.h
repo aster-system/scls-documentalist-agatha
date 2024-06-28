@@ -154,7 +154,7 @@ namespace scls {
         void parse_project();
 
         // Returns the content of a file
-        std::string file_content(Replica_File& file);
+        std::string file_content(Replica_File& file, _Balise_Container* balising_system);
         // Load a project unformatted from sda V0.1
         static Pattern_Project* load_sda_0_1(std::string path);
         // Save the project unformatted
@@ -162,6 +162,7 @@ namespace scls {
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string description() const {return a_description;};
+        inline std::string directory() const {return path_parent(path());};
         inline std::string name() const {return a_name;};
         inline std::string path() const {return a_path;};
         inline void set_description(std::string new_project_description) {a_description = new_project_description;};
@@ -205,7 +206,7 @@ namespace scls {
         // Add a replica file to the project
         Replica_File* add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern);
         // Exports the project
-        bool export_project(std::string path);
+        bool export_project(std::string path, _Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
         Replica_File* replica_file_by_path(std::string replica_file_path) {
             for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
@@ -213,6 +214,8 @@ namespace scls {
             }
             return 0;
         };
+        // Load a global variable in the project from sda V 0.2
+        void load_global_variable_sda_0_2(std::string path);
         // Load a replica file in the project from sda V 0.2
         void load_replica_file_sda_0_2(std::string path);
         // Load the project from sda V 0.2

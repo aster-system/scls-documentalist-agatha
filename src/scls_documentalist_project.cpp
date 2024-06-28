@@ -40,22 +40,13 @@ namespace scls {
     Pattern_Project::Pattern_Project(std::string name, std::string path) : a_name(name), a_path(path) { }
 
     // Returns the content of a file
-    std::string Pattern_Project::file_content(Replica_File& file) {
+    std::string Pattern_Project::file_content(Replica_File& file, _Balise_Container* balising_system) {
         std::string to_return = "";
         if(!contains_pattern(file.pattern)) return to_return;
-
-        // Format the text
         std::string base_pattern_content = file.pattern->base_text().to_std_string();
-        int level = 0;
-        std::string pattern_content = "";
-        for(int i = 0;i<static_cast<int>(base_pattern_content.size());i++) {
-            if(base_pattern_content[i] == '<') level++;
-            else if(base_pattern_content[i] == '>') level--;
-            else if(level <= 0) pattern_content += base_pattern_content[i];
-        }
 
         // Use the variable
-        pattern_content = format_string_as_plain_text(pattern_content);
+        std::string pattern_content = balising_system->plain_text(base_pattern_content);
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(pattern_content);
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
             if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
@@ -68,7 +59,7 @@ namespace scls {
                     Pattern_Variable current_variable = analyse_pattern_variable(current_balise_formated);
                     if(current_variable.global) {
                         // The variable is global
-                        to_return += file.global_variables.get()->global_variable_value(current_variable.name);
+                        to_return += balising_system->plain_text(file.global_variables.get()->global_variable_value(current_variable.name));
                     }
                     else {
                         to_return += "VARIABLE";
@@ -175,6 +166,7 @@ namespace scls {
             scls::print("Warning", "SCLS Documentalist project \"" + name() + "\"", "The path \"" + path + "\" where you want to save the project is not a directory.");
             return false;
         }
+        if(path[path.size() - 1] != '/') path += "/";
 
         // Save each files
         std::string all_file_config = "";
@@ -367,7 +359,7 @@ namespace scls {
     }
 
     // Exports the project
-    bool Replica_Project::export_project(std::string path) {
+    bool Replica_Project::export_project(std::string path, _Balise_Container* balising_system) {
         if(!std::filesystem::exists(path)) {
             scls::print("Warning", "SCLS Documentalist replica \"" + name() + "\" export", "The path \"" + path + "\" where you want to export the replica does not exist.");
             return false;
@@ -397,10 +389,24 @@ namespace scls {
 
             // Write the file
             current_path += path_cutted[path_cutted.size() - 1];
-            write_in_file(current_path, attached_pattern()->file_content(current_file));
+            write_in_file(current_path, attached_pattern()->file_content(current_file, balising_system));
         }
 
         return true;
+    }
+
+    // Load a global variable in the project from sda V 0.2
+    void Replica_Project::load_global_variable_sda_0_2(std::string path) {
+        std::string content = read_file(path);
+
+        // Parse the file
+        std::string variable_name = ""; int i = 0;
+        while(i < static_cast<int>(content.size()) && content[i] != ';') {
+            variable_name += content[i]; i++;
+        }
+        if(i < static_cast<int>(content.size())) i++;
+        content = content.substr(i, content.size() - (i));
+        if(content != "" && variable_name != "") global_variables_values()[variable_name] = content;
     }
 
     // Load a replica file in the project from sda V 0.2
@@ -445,6 +451,7 @@ namespace scls {
         // Get the datas about the project
         std::vector<std::string> files = std::vector<std::string>();
         std::string final_name = "";
+        std::vector<std::string> global_variables = std::vector<std::string>();
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
             if(cutted[i].content.size() > 0) {
                 if(cutted[i].content[0] == '<') {
@@ -455,8 +462,12 @@ namespace scls {
                         i++; if(i < static_cast<int>(cutted.size())) final_name = cutted[i].content;
                     }
                     else if(final_balise_name == "all_files") {
-                        // Get the name of the project
+                        // Get the files in the project
                         i++; if(i < static_cast<int>(cutted.size())) files = cut_string(cutted[i].content, ";");
+                    }
+                    else if(final_balise_name == "all_global_variables") {
+                        // Get the global variables of the project
+                        i++; if(i < static_cast<int>(cutted.size())) global_variables = cut_string(cutted[i].content, ";");
                     }
                 }
             }
@@ -467,6 +478,11 @@ namespace scls {
         // Create each file
         for(int i = 0;i<static_cast<int>(files.size());i++) {
             new_project->load_replica_file_sda_0_2(path + "/" + files[i]);
+        }
+
+        // Create each global variables
+        for(int i = 0;i<static_cast<int>(global_variables.size());i++) {
+            new_project->load_global_variable_sda_0_2(path + "/" + global_variables[i]);
         }
 
         return new_project;
@@ -539,13 +555,12 @@ namespace scls {
 
         // Create each global variables
         std::string global_variables_content = "";
-        std::cout << "L " << global_variables_values().size() << std::endl;
         if(global_variables_values().size() > 0) {
             // Save the global variabless in the main file
             global_variables_content += "<all_global_variables>";
             for(int i = 0;i<static_cast<int>(global_variables_values().size());i++) {
                 global_variables_content += name() + std::to_string(i + total_file_number) + ".sdrf";
-                if(i != static_cast<int>(global_variables_values().size()) - 1) files_content += ";";
+                if(i != static_cast<int>(global_variables_values().size()) - 1) global_variables_content += ";";
             }
 
             // Create each files
