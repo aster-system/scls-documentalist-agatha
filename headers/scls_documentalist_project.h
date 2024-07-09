@@ -153,6 +153,10 @@ namespace scls {
         // Parse the entire project
         void parse_project();
 
+        // Apply all to a part of text
+        std::string __apply_all(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system);
+        // Apply the global variables to a part of text
+        std::string __apply_global_variables(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system);
         // Returns the content of a file
         std::string file_content(Replica_File& file, _Balise_Container* balising_system);
         // Load a project unformatted from sda V0.1

@@ -62,6 +62,8 @@ namespace scls {
         std::string line_start = "";
         // Name of the variable
         std::string name = "";
+        // If the variable is the path to the root or not
+        bool path_to_root = false;
     };
 
     // Analyse a pattern variable

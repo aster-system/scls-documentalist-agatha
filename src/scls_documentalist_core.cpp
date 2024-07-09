@@ -46,19 +46,25 @@ namespace scls {
 
         // Analyse the variable
         bool global = false;
-        std::vector<std::string> cutted_variable = cut_string(content, " ");
-        for(int i = 1;i<static_cast<int>(cutted_variable.size());i++) {
-            if(cutted_variable[i] == "global") {
+        bool path_to_root = false;
+        std::vector<std::string> variable_attributes = cut_balise_by_attributes(content);
+        for(int i = 0;i<static_cast<int>(variable_attributes.size());i++) {
+            if(variable_attributes[i] == "global") {
                 // The variable is global
                 global = true;
             }
-            else if(i == 1) {
+            else if(variable_attributes[i] == "path_to_root") {
+                // The variable should be the path to the root
+                path_to_root = true;
+            }
+            else if(i == 0) {
                 // The name of the variable
-                new_variable.name = cutted_variable[i];
+                new_variable.name = variable_attributes[i];
             }
         }
 
         new_variable.global = global;
+        new_variable.path_to_root = path_to_root;
         return new_variable;
     }
 
