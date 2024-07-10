@@ -58,9 +58,13 @@ namespace scls {
                     Pattern_Variable current_variable = analyse_pattern_variable(current_balise_formated);
                     if(current_variable.path_to_root) {
                         // The variable is the path to the root
-                        std::filesystem::path current_path = file.internal_path;
-                        std::string to_add = std::filesystem::relative(file.internal_path, "./").string();
-                        if(to_add[0] != '.') to_add = "." + to_add;
+                        std::string current_path = "/base/" + file.internal_path;
+                        std::string to_add = replace(std::filesystem::relative("/base/", current_path).string(), "\\", "/");
+                        if(to_add.size() > 0) {
+                            if(to_add[0] != '.') to_add = "." + to_add; if(to_add[to_add.size() - 1] == '/') to_add = to_add.substr(0, to_add.size() - 1);
+                            while(to_add.size() > 0 && to_add[to_add.size() - 1] == '.') to_add = to_add.substr(0, to_add.size() - 1);
+                        }
+                        if(to_add == "") to_add = "./";
                         to_return += balising_system->plain_text(to_add);
                     }
                     else {
