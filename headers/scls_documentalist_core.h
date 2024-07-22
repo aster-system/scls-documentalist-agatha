@@ -40,6 +40,7 @@
 #else
 #include <scls_foundation.h>
 #endif // __ASTER_DEV
+#include <algorithm>
 
 // Keyword to define a variable in a balise
 #ifndef SCLS_DOCUMENTALIST_VARIABLE_KEYWORD

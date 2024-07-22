@@ -230,6 +230,10 @@ namespace scls {
         std::string save_replica_file_text_sda_0_2(Replica_File& replica_file);
         // Save the project unformatted
         bool save_sda_0_2(std::string path);
+        // Returns the sorted first path
+        std::shared_ptr<std::vector<std::string>> replica_files_first_sorted_by_path();
+        // Returns the sorted replica files by path
+        std::shared_ptr<std::vector<Replica_File>> replica_files_sorted_by_path();
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};

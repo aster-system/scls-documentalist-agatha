@@ -631,4 +631,36 @@ namespace scls {
 
         return true;
     }
+
+    // Returns the sorted first path
+    std::shared_ptr<std::vector<std::string>> Replica_Project::replica_files_first_sorted_by_path() {
+        std::shared_ptr<std::vector<std::string>> to_return = std::make_shared<std::vector<std::string>>();
+        std::shared_ptr<std::vector<Replica_File>> files = replica_files_sorted_by_path();
+
+        // Get each path
+        for(int i = 0;i<static_cast<int>(files.get()->size());i++) {
+            std::string& current_path = files.get()->at(i).internal_path;
+            std::vector<std::string> cutted = cut_path(current_path);
+            if(!contains(*to_return.get(), cutted[0])) {
+                to_return.get()->push_back(cutted[0]);
+            }
+        }
+
+        // Function to indicate how to sort the paths
+        struct { bool operator()(const std::string& a, const std::string& b) const { return a < b; } } sorter;
+        std::sort(to_return.get()->begin(), to_return.get()->end(), sorter);
+        return to_return;
+    }
+
+    // Returns the sorted replica files by path
+    std::shared_ptr<std::vector<Replica_File>> Replica_Project::replica_files_sorted_by_path() {
+        std::shared_ptr<std::vector<Replica_File>> to_return = std::make_shared<std::vector<Replica_File>>(a_replica_files);
+
+        // Function to indicate how to sort the files
+        struct {
+            bool operator()(const Replica_File& a, const Replica_File& b) const { return a.internal_path < b.internal_path; }
+        } sorter;
+        std::sort(to_return.get()->begin(), to_return.get()->end(), sorter);
+        return to_return;
+    }
 }
