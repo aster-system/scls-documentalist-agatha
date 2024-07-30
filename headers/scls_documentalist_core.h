@@ -36,7 +36,7 @@
 
 // "scls_foundation.h" -> File containing the core of SCLS.
 #ifdef __ASTER_DEV
-#include "../../dev_part/dev_part/scls_foundation.h"
+#include "../../../scls-foundation-leonhard/scls_foundation.h"
 #else
 #include <scls_foundation.h>
 #endif // __ASTER_DEV

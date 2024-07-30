@@ -410,6 +410,13 @@ namespace scls {
         return &new_replica;
     }
 
+    // Add a replica file to the project with a std::string content
+    Replica_File* Replica_Project::add_replica_file(std::string replica_file_path, std::string content) {
+        Replica_File* to_return = add_replica_file(replica_file_path, 0);
+        to_return->content_out_pattern = content;
+        return to_return;
+    }
+
     // Exports the project
     bool Replica_Project::export_project(std::string path, _Balise_Container* balising_system) {
         if(!std::filesystem::exists(path)) {
@@ -441,7 +448,8 @@ namespace scls {
 
             // Write the file
             current_path += path_cutted[path_cutted.size() - 1];
-            write_in_file(current_path, attached_pattern()->file_content(current_file, balising_system));
+            if(current_file.pattern == 0) write_in_file(current_path, balising_system->plain_text(current_file.content_out_pattern));
+            else write_in_file(current_path, attached_pattern()->file_content(current_file, balising_system));
         }
 
         return true;
@@ -468,6 +476,7 @@ namespace scls {
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
 
         // Get the datas about the file
+        std::string content_path = "";
         std::string internal_path = "";
         std::string pattern = "";
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
@@ -483,14 +492,25 @@ namespace scls {
                         // Get the pattern of the project
                         i++; if(i < static_cast<int>(cutted.size())) pattern = cutted[i].content;
                     }
+                    else if(final_balise_name == "content_path") {
+                        // Get the pattern of the project
+                        i++; if(i < static_cast<int>(cutted.size())) content_path = cutted[i].content;
+                    }
                 }
             }
         }
 
         // Load the file
-        Text_Pattern* final_pattern = attached_pattern()->pattern_by_name(pattern);
-        if(final_pattern == 0) return;
-        add_replica_file(internal_path, final_pattern);
+        std::string final_content = "";
+        Text_Pattern* final_pattern = 0;
+        if(pattern != "") {
+            final_pattern = attached_pattern()->pattern_by_name(pattern);
+            add_replica_file(internal_path, final_pattern);
+        }
+        else if(content_path != "" && std::filesystem::exists(content_path)) {
+            final_content = to_utf_8_code_point(read_file(content_path));
+            add_replica_file(internal_path, final_content);
+        }
     }
 
     // Load the project from sda V 0.2
@@ -566,9 +586,14 @@ namespace scls {
     }
 
     // Returns the text to save a replica file
-    std::string Replica_Project::save_replica_file_text_sda_0_2(Replica_File& replica_file) {
+    std::string Replica_Project::save_replica_file_text_sda_0_2(Replica_File& replica_file, std::string path, unsigned int& total_file_number) {
         std::string to_return = "<internal_path>" + replica_file.internal_path;
-        to_return += "<pattern>" + replica_file.pattern->name().to_std_string();
+        if(replica_file.pattern != 0) to_return += "<pattern>" + replica_file.pattern->name().to_std_string();
+        else {
+            std::string new_file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
+            to_return += "<content_path>" + new_file_path;
+            write_in_file(new_file_path, replica_file.content_out_pattern);
+        }
         return to_utf_8(to_return);
     }
 
@@ -590,19 +615,14 @@ namespace scls {
         // Create each files
         std::string files_content = "";
         if(replica_files().size() > 0) {
-            // Save the files in the main file
+            // Create each files
             files_content += "<all_files>";
             for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
-                files_content += name() + std::to_string(i) + ".sdrf";
+                files_content += name() + std::to_string(total_file_number) + ".sdrf";
                 if(i != static_cast<int>(replica_files().size()) - 1) files_content += ";";
+                std::string file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
+                write_in_file(file_path, save_replica_file_text_sda_0_2(replica_files()[i], path, total_file_number));
             }
-
-            // Create each files
-            for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
-                std::string file_path = path + name() + std::to_string(i) + ".sdrf";
-                write_in_file(file_path, save_replica_file_text_sda_0_2(replica_files()[i]));
-            }
-            total_file_number += replica_files().size();
         }
 
         // Create each global variables
@@ -626,39 +646,41 @@ namespace scls {
 
         // Create the .sdr file
         std::string config_file = "<name>" + name() + "<version>SDA 0.2<pattern_path>" + attached_pattern()->path() + files_content + global_variables_content;
-        std::string config_file_path = path + name() + ".sdr";
-        write_in_file(config_file_path, config_file);
+        write_in_file(path_main_file(), config_file);
 
         return true;
     }
 
     // Returns the sorted first path
-    std::shared_ptr<std::vector<std::string>> Replica_Project::replica_files_first_sorted_by_path() {
-        std::shared_ptr<std::vector<std::string>> to_return = std::make_shared<std::vector<std::string>>();
-        std::shared_ptr<std::vector<Replica_File>> files = replica_files_sorted_by_path();
+    std::shared_ptr<std::vector<Replica_File*>> Replica_Project::replica_files_first_sorted_by_path() {
+        std::shared_ptr<std::vector<Replica_File*>> to_return = std::make_shared<std::vector<Replica_File*>>();
+        std::shared_ptr<std::vector<Replica_File*>> files = replica_files_sorted_by_path();
+        std::vector<std::string> to_return_path = std::vector<std::string>();
 
         // Get each path
         for(int i = 0;i<static_cast<int>(files.get()->size());i++) {
-            std::string& current_path = files.get()->at(i).internal_path;
+            std::string& current_path = files.get()->at(i)->internal_path;
             std::vector<std::string> cutted = cut_path(current_path);
-            if(!contains(*to_return.get(), cutted[0])) {
-                to_return.get()->push_back(cutted[0]);
+            if(!contains(to_return_path, cutted[0])) {
+                to_return.get()->push_back(files.get()->at(i));
+                to_return_path.push_back(cutted[0]);
             }
         }
 
         // Function to indicate how to sort the paths
-        struct { bool operator()(const std::string& a, const std::string& b) const { return a < b; } } sorter;
+        struct { bool operator()(const Replica_File* a, const Replica_File* b) const { return a->internal_path < b->internal_path; } } sorter;
         std::sort(to_return.get()->begin(), to_return.get()->end(), sorter);
         return to_return;
     }
 
     // Returns the sorted replica files by path
-    std::shared_ptr<std::vector<Replica_File>> Replica_Project::replica_files_sorted_by_path() {
-        std::shared_ptr<std::vector<Replica_File>> to_return = std::make_shared<std::vector<Replica_File>>(a_replica_files);
+    std::shared_ptr<std::vector<Replica_File*>> Replica_Project::replica_files_sorted_by_path() {
+        std::shared_ptr<std::vector<Replica_File*>> to_return = std::make_shared<std::vector<Replica_File*>>();
+        for(int i = 0;i<static_cast<int>(a_replica_files.size());i++) { to_return.get()->push_back(&a_replica_files[i]); }
 
         // Function to indicate how to sort the files
         struct {
-            bool operator()(const Replica_File& a, const Replica_File& b) const { return a.internal_path < b.internal_path; }
+            bool operator()(const Replica_File* a, const Replica_File* b) const { return a->internal_path < b->internal_path; }
         } sorter;
         std::sort(to_return.get()->begin(), to_return.get()->end(), sorter);
         return to_return;

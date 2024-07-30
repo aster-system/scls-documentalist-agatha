@@ -134,6 +134,8 @@ namespace scls {
         // Constructor
         Replica_File(const std::shared_ptr<__Variables_Value_Container>& replica_project_global_variables) : global_variables(replica_project_global_variables) { };
 
+        // Content out of the pattern
+        std::string content_out_pattern = "";
         // Values of the global variable in the replica project
         std::shared_ptr<__Variables_Value_Container> global_variables;
         // Internal path of the file
@@ -209,6 +211,8 @@ namespace scls {
 
         // Add a replica file to the project
         Replica_File* add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern);
+        // Add a replica file to the project with a std::string content
+        Replica_File* add_replica_file(std::string replica_file_path, std::string content);
         // Exports the project
         bool export_project(std::string path, _Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
@@ -227,13 +231,21 @@ namespace scls {
         // Returns the path of the attached patter in a replica
         static std::string replica_attached_pattern_from_path_sda_0_2(std::string path);
         // Returns the text to save a replica file
-        std::string save_replica_file_text_sda_0_2(Replica_File& replica_file);
+        std::string save_replica_file_text_sda_0_2(Replica_File& replica_file, std::string path, unsigned int& total_file_number);
         // Save the project unformatted
         bool save_sda_0_2(std::string path);
         // Returns the sorted first path
-        std::shared_ptr<std::vector<std::string>> replica_files_first_sorted_by_path();
+        std::shared_ptr<std::vector<Replica_File*>> replica_files_first_sorted_by_path();
         // Returns the sorted replica files by path
-        std::shared_ptr<std::vector<Replica_File>> replica_files_sorted_by_path();
+        std::shared_ptr<std::vector<Replica_File*>> replica_files_sorted_by_path();
+
+        // Returns the path of the main file of the project
+        inline std::string path_main_file() const {
+            std::string to_return = path();
+            if(to_return[to_return.size() - 1] != '/') to_return += "/";
+            to_return += name() + ".sdr";
+            return to_return;
+        };
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
