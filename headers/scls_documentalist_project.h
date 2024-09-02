@@ -116,10 +116,16 @@ namespace scls {
         // __Variables_Value_Container destructor
         ~__Variables_Value_Container(){};
 
+        // Returns a global variable
+        inline std::string* global_variable(std::string variable) {
+            for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++) { if(it->first == variable) return &it->second; } return 0;
+        };
         // Returns the value of a global variable, or ""
         inline std::string global_variable_value(std::string variable) {
             for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++) { if(it->first == variable) return it->second; } return "";
         };
+        // Change the value of a global variable
+        inline void set_global_variable_value(std::string variable_name, std::string new_value) {if(global_variable(variable_name) != 0)a_global_variables[variable_name]=new_value;};
 
         // Getters and setters
         inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
@@ -218,7 +224,7 @@ namespace scls {
         // Returns a replica file by its path, or 0 if there is no this path
         Replica_File* replica_file_by_path(std::string replica_file_path) {
             for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
-                if(replica_files()[i].internal_path == replica_file_path) return &(replica_files()[i]);
+                if(replica_files()[i].get()->internal_path == replica_file_path) return replica_files()[i].get();
             }
             return 0;
         };
@@ -234,10 +240,11 @@ namespace scls {
         std::string save_replica_file_text_sda_0_2(Replica_File& replica_file, std::string path, unsigned int& total_file_number);
         // Save the project unformatted
         bool save_sda_0_2(std::string path);
+        inline bool save_sda_0_2(){return save_sda_0_2(path());};
         // Returns the sorted first path
-        std::shared_ptr<std::vector<Replica_File*>> replica_files_first_sorted_by_path();
+        std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> replica_files_first_sorted_by_path();
         // Returns the sorted replica files by path
-        std::shared_ptr<std::vector<Replica_File*>> replica_files_sorted_by_path();
+        std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> replica_files_sorted_by_path();
 
         // Returns the path of the main file of the project
         inline std::string path_main_file() const {
@@ -249,10 +256,12 @@ namespace scls {
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
+        inline std::string global_variable_value(std::string variable_name) {return a_global_variables_values.get()->global_variable_value(variable_name);};
         inline std::map<std::string, std::string>& global_variables_values() {return a_global_variables_values.get()->global_variables();};
         inline std::string path() const {return a_path;};
         inline std::string name() const {return a_name;};
-        inline std::vector<Replica_File>& replica_files() {return a_replica_files;};
+        inline std::vector<std::shared_ptr<Replica_File>>& replica_files() {return a_replica_files;};
+        inline void set_global_variable_value(std::string variable_name, std::string new_value) {a_global_variables_values.get()->set_global_variable_value(variable_name,new_value);};
     private:
         // Datas about the replica project
         // Description of the replica project
@@ -266,7 +275,7 @@ namespace scls {
         // Pattern attached to the project
         std::shared_ptr<Pattern_Project> a_pattern;
         // Value of each defined files
-        std::vector<Replica_File> a_replica_files = std::vector<Replica_File>();
+        std::vector<std::shared_ptr<Replica_File>> a_replica_files = std::vector<std::shared_ptr<Replica_File>>();
     };
 
     // Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor

@@ -402,12 +402,13 @@ namespace scls {
         if(replica_file_by_path(replica_file_path) != 0) return 0;
 
         // Create the file
-        replica_files().push_back(Replica_File(a_global_variables_values));
-        Replica_File& new_replica = replica_files()[replica_files().size() - 1];
+        std::shared_ptr<Replica_File> new_file = std::make_shared<Replica_File>(a_global_variables_values);
+        replica_files().push_back(new_file);
+        Replica_File& new_replica = *new_file.get();
         new_replica.internal_path = replica_file_path;
         new_replica.pattern = pattern;
 
-        return &new_replica;
+        return new_file.get();
     }
 
     // Add a replica file to the project with a std::string content
@@ -436,10 +437,10 @@ namespace scls {
 
         // Export each files
         for(int i = 0;i<static_cast<int>(replica_files().size());i++) {
-            Replica_File& current_file = replica_files()[i];
+            std::shared_ptr<Replica_File> current_file = replica_files()[i];
 
             // Format the needed path
-            std::string current_path = current_file.internal_path;
+            std::string current_path = current_file.get()->internal_path;
             std::vector<std::string> path_cutted = cut_string(current_path, "/"); current_path = path;
             for(int i = 0;i<static_cast<int>(path_cutted.size()) - 1;i++) {
                 current_path += path_cutted[i] + "/";
@@ -448,8 +449,8 @@ namespace scls {
 
             // Write the file
             current_path += path_cutted[path_cutted.size() - 1];
-            if(current_file.pattern == 0) write_in_file(current_path, balising_system->plain_text(current_file.content_out_pattern));
-            else write_in_file(current_path, attached_pattern()->file_content(current_file, balising_system));
+            if(current_file.get()->pattern == 0) write_in_file(current_path, balising_system->plain_text(current_file.get()->content_out_pattern));
+            else write_in_file(current_path, attached_pattern()->file_content(*current_file.get(), balising_system));
         }
 
         return true;
@@ -466,7 +467,7 @@ namespace scls {
         }
         if(i < static_cast<int>(content.size())) i++;
         content = content.substr(i, content.size() - (i));
-        if(content != "" && variable_name != "") global_variables_values()[variable_name] = content;
+        if(variable_name != "") global_variables_values()[variable_name] = content;
     }
 
     // Load a replica file in the project from sda V 0.2
@@ -621,7 +622,7 @@ namespace scls {
                 files_content += name() + std::to_string(total_file_number) + ".sdrf";
                 if(i != static_cast<int>(replica_files().size()) - 1) files_content += ";";
                 std::string file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
-                write_in_file(file_path, save_replica_file_text_sda_0_2(replica_files()[i], path, total_file_number));
+                write_in_file(file_path, save_replica_file_text_sda_0_2(*replica_files()[i].get(), path, total_file_number));
             }
         }
 
@@ -652,9 +653,9 @@ namespace scls {
     }
 
     // Returns the sorted first path
-    std::shared_ptr<std::vector<Replica_File*>> Replica_Project::replica_files_first_sorted_by_path() {
-        std::shared_ptr<std::vector<Replica_File*>> to_return = std::make_shared<std::vector<Replica_File*>>();
-        std::shared_ptr<std::vector<Replica_File*>> files = replica_files_sorted_by_path();
+    std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> Replica_Project::replica_files_first_sorted_by_path() {
+        std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> to_return = std::make_shared<std::vector<std::shared_ptr<Replica_File>>>();
+        std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> files = replica_files_sorted_by_path();
         std::vector<std::string> to_return_path = std::vector<std::string>();
 
         // Get each path
@@ -668,19 +669,19 @@ namespace scls {
         }
 
         // Function to indicate how to sort the paths
-        struct { bool operator()(const Replica_File* a, const Replica_File* b) const { return a->internal_path < b->internal_path; } } sorter;
+        struct { bool operator()(const std::shared_ptr<Replica_File>& a, const std::shared_ptr<Replica_File>& b) const { return a.get()->internal_path < b.get()->internal_path; } } sorter;
         std::sort(to_return.get()->begin(), to_return.get()->end(), sorter);
         return to_return;
     }
 
     // Returns the sorted replica files by path
-    std::shared_ptr<std::vector<Replica_File*>> Replica_Project::replica_files_sorted_by_path() {
-        std::shared_ptr<std::vector<Replica_File*>> to_return = std::make_shared<std::vector<Replica_File*>>();
-        for(int i = 0;i<static_cast<int>(a_replica_files.size());i++) { to_return.get()->push_back(&a_replica_files[i]); }
+    std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> Replica_Project::replica_files_sorted_by_path() {
+        std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> to_return = std::make_shared<std::vector<std::shared_ptr<Replica_File>>>();
+        for(int i = 0;i<static_cast<int>(a_replica_files.size());i++) { to_return.get()->push_back(a_replica_files[i]); }
 
         // Function to indicate how to sort the files
         struct {
-            bool operator()(const Replica_File* a, const Replica_File* b) const { return a->internal_path < b->internal_path; }
+            bool operator()(const std::shared_ptr<Replica_File>& a, const std::shared_ptr<Replica_File>& b) const { return a.get()->internal_path < b.get()->internal_path; }
         } sorter;
         std::sort(to_return.get()->begin(), to_return.get()->end(), sorter);
         return to_return;
