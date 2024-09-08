@@ -135,6 +135,14 @@ namespace scls {
         std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
     };
 
+    struct Replica_File_Variable {
+        // Struct representing a variable in a replica file
+        // Content if the variable
+        std::string content = "";
+        // Name of the variable
+        std::string name = "";
+    };
+
     struct Replica_File {
         // Struct representing a file in a replica project
         // Constructor
@@ -148,6 +156,21 @@ namespace scls {
         std::string internal_path = "";
         // Pattern use by the file
         Text_Pattern* pattern = 0;
+
+        // Returns a variable in the file
+        inline std::shared_ptr<Replica_File_Variable> variable_by_name(std::string variable_name) {
+            for(std::map<std::string, std::shared_ptr<Replica_File_Variable>>::iterator it = variables.begin();it!=variables.end();it++) {
+                if(it->first == variable_name) return it->second;
+            }
+
+            // Create the variable if it does not exist
+            std::shared_ptr<Replica_File_Variable> to_return = std::make_shared<Replica_File_Variable>();
+            to_return.get()->name = variable_name;
+            variables[variable_name] = to_return;
+            return to_return;
+        };
+        // Defined variables for the file
+        std::map<std::string, std::shared_ptr<Replica_File_Variable>> variables = std::map<std::string, std::shared_ptr<Replica_File_Variable>>();
     };
 
     class Pattern_Project {
@@ -171,6 +194,7 @@ namespace scls {
         static Pattern_Project* load_sda_0_1(std::string path);
         // Save the project unformatted
         bool save_sda_0_1(std::string path);
+        inline bool save_sda_0_1() {return save_sda_0_1(path_parent(a_path));};
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline std::string description() const {return a_description;};

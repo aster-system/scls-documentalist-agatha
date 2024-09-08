@@ -63,6 +63,7 @@ namespace scls {
         std::string line_start = "";
         // Name of the variable
         std::string name = "";
+
         // If the variable is the path to the root or not
         bool path_to_root = false;
     };
@@ -88,6 +89,14 @@ namespace scls {
 
         // Parse the text in the pattern
         void parse_pattern();
+
+        // Returns a variable by its name
+        inline std::shared_ptr<Pattern_Variable> variable_by_name(std::string variable_name) const {
+            for(int i = 0;i<static_cast<int>(a_variables.size());i++) {
+                if(a_variables.at(i).get()->name == variable_name) return a_variables.at(i);
+            }
+            return std::shared_ptr<Pattern_Variable>();
+        };
 
         // Getters and setters (ONLY WITH ATTRIBUTES)
         inline String base_text() const {return a_base_text;};

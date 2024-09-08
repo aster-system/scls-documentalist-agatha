@@ -68,7 +68,9 @@ namespace scls {
                         to_return += balising_system->plain_text(to_add);
                     }
                     else {
-                        to_return += "VARIABLE";
+                        // Apply a basic variable
+                        std::string variable_content = file.variable_by_name(current_variable.name).get()->content;
+                        to_return += variable_content;
                     }
                 }
                 else {
@@ -80,6 +82,7 @@ namespace scls {
                 to_return += cutted[i].content;
             }
         }
+        std::cout << "L" << std::endl << to_return << std::endl;
 
         return to_return;
     }
