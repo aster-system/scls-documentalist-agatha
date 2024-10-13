@@ -40,7 +40,7 @@ namespace scls {
     Pattern_Project::Pattern_Project(std::string name, std::string path) : a_name(name), a_path(path) { }
 
     // Apply all to a part of text
-    std::string Pattern_Project::__apply_all(const std::string& base_pattern_content, Replica_File& file, _Balise_Container* balising_system) {
+    std::string Pattern_Project::__apply_all(const std::string& base_pattern_content, __Replica_File_Variable_Element_Base& file, std::string internal_path, _Balise_Container* balising_system) {
         // Handle global variable
         std::string pattern_content = __apply_global_variables(base_pattern_content, file, balising_system);
         std::string to_return = "";
@@ -55,10 +55,11 @@ namespace scls {
                 if(current_balise_name == "scls_var") {
                     // Remove the < and >
                     current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
-                    Pattern_Variable current_variable = analyse_pattern_variable(current_balise_formated);
-                    if(current_variable.path_to_root) {
+                    std::shared_ptr<Pattern_Variable> current_variable_shared_ptr = __analyse_pattern_variable(current_balise_formated, 0);
+                    Pattern_Variable* current_variable = current_variable_shared_ptr.get();
+                    if(current_variable->path_to_root) {
                         // The variable is the path to the root
-                        std::string current_path = "/base/" + file.internal_path;
+                        std::string current_path = "/base/" + internal_path;
                         std::string to_add = replace(std::filesystem::relative("/base/", current_path).string(), "\\", "/");
                         if(to_add.size() > 0) {
                             if(to_add[0] != '.') to_add = "." + to_add; if(to_add[to_add.size() - 1] == '/') to_add = to_add.substr(0, to_add.size() - 1);
@@ -67,28 +68,57 @@ namespace scls {
                         if(to_add == "") to_add = "./";
                         to_return += balising_system->plain_text(to_add);
                     }
+                    else if(current_variable->listed()) {
+                        // Apply a list of variable
+                        Replica_File_Variable_List* current_list = reinterpret_cast<Replica_File_Variable_List*>(file.variable_by_name(current_variable->name).get());
+                        if(current_list == 0) continue;
+                        // Get the needed content
+                        int level = 1; i++;
+                        std::string variable_content = "";
+                        while(i<static_cast<int>(cutted.size())) {
+                            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
+                                current_balise_formated = formatted_balise(cutted[i].content);
+                                current_balise_name = balise_name(current_balise_formated);
+                                // Remove the < and >
+                                current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
+                                if(current_balise_name == "scls_var") {
+                                    if(current_balise_formated[0] == '/') level--;
+                                    if(level == 0) break;
+                                }
+                            }
+                            variable_content += cutted[i].content;
+                            i++;
+                        }
+
+                        // Apply each element
+                        for(int j = 0;j<static_cast<int>(current_list->elements.size());j++) {
+                            to_return += __apply_all(variable_content, *current_list->elements[j].get(), internal_path, balising_system);
+                        }
+                    }
                     else {
                         // Apply a basic variable
-                        std::string variable_content = file.variable_by_name(current_variable.name).get()->content;
-                        to_return += variable_content;
+                        std::shared_ptr<Replica_File_Variable> needed_variable = file.variable_by_name(current_variable->name);
+                        if(needed_variable.get() != 0) {
+                            std::string variable_content = balising_system->plain_text(needed_variable.get()->content);;
+                            to_return += variable_content;
+                        }
                     }
                 }
                 else {
                     current_balise_formated = cutted[i].content.substr(1, current_balise_formated.size() - 2);
-                    to_return += "<" + __apply_all(current_balise_formated, file, balising_system) + ">";
+                    to_return += "<" + __apply_all(current_balise_formated, file, internal_path, balising_system) + ">";
                 }
             }
             else {
                 to_return += cutted[i].content;
             }
         }
-        std::cout << "L" << std::endl << to_return << std::endl;
 
         return to_return;
     }
 
     // Apply the global variables to a part of text
-    std::string Pattern_Project::__apply_global_variables(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system) {
+    std::string Pattern_Project::__apply_global_variables(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, _Balise_Container* balising_system) {
         std::string to_return = "";
 
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(part_of_text);
@@ -100,10 +130,11 @@ namespace scls {
                 if(current_balise_name == "scls_var") {
                     // Remove the < and >
                     current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
-                    Pattern_Variable current_variable = analyse_pattern_variable(current_balise_formated);
-                    if(current_variable.global) {
+                    std::shared_ptr<Pattern_Variable> current_variable_shared_ptr = __analyse_pattern_variable(current_balise_formated, 0);
+                    Pattern_Variable* current_variable = current_variable_shared_ptr.get();
+                    if(current_variable->global) {
                         // The variable is global
-                        to_return += balising_system->plain_text(file.global_variables.get()->global_variable_value(current_variable.name));
+                        to_return += balising_system->plain_text(file.global_variables.get()->global_variable_value(current_variable->name));
                     }
                     else {
                         to_return += "<" + current_balise_formated + ">";
@@ -129,6 +160,7 @@ namespace scls {
 
         // Handle global variable
         to_return = __apply_all(base_pattern_content, file, balising_system);
+        to_return = to_utf_8(to_return);
         return to_return;
     }
 
@@ -396,29 +428,63 @@ namespace scls {
     Pattern_Project::~Pattern_Project() {}
 
     // Most basic Replica_Project constructor
-    Replica_Project::Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern) : a_name(name), a_path(path), a_pattern(pattern) {
+    Replica_Project::Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern) : a_name(name), a_path(path), a_pattern(pattern) {}
 
-    }
+    // Add a replica file variable element to a replica file in the project
+    void Replica_Project::__add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string replica_file_variable_path) {
+        // Create the needed variables for the adding
+        std::string variable_content = "";
+        std::string variable_name = "";
+        std::string variable_type = "";
 
-    // Add a replica file to the project
-    Replica_File* Replica_Project::add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern) {
-        if(replica_file_by_path(replica_file_path) != 0) return 0;
+        // Cut the variable file
+        std::string content = read_file(replica_file_variable_path);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0) {
+                if(cutted[i].content[0] == '<') {
+                    // The part of the text is a balise
+                    std::string final_balise_name = balise_name(cutted[i].content);
+                    if(final_balise_name == "name") {
+                        // Get the name of the project
+                        i++; if(i < static_cast<int>(cutted.size())) variable_name = cutted[i].content;
+                    }
+                    else if(final_balise_name == "content") {
+                        // Get the files in the project
+                        i++; if(i < static_cast<int>(cutted.size())) variable_content = cutted[i].content;
+                    }
+                    else if(final_balise_name == "type") {
+                        // Get the files in the project
+                        i++; if(i < static_cast<int>(cutted.size())) variable_type = cutted[i].content;
+                    }
+                }
+            }
+        }
 
-        // Create the file
-        std::shared_ptr<Replica_File> new_file = std::make_shared<Replica_File>(a_global_variables_values);
-        replica_files().push_back(new_file);
-        Replica_File& new_replica = *new_file.get();
-        new_replica.internal_path = replica_file_path;
-        new_replica.pattern = pattern;
-
-        return new_file.get();
-    }
-
-    // Add a replica file to the project with a std::string content
-    Replica_File* Replica_Project::add_replica_file(std::string replica_file_path, std::string content) {
-        Replica_File* to_return = add_replica_file(replica_file_path, 0);
-        to_return->content_out_pattern = content;
-        return to_return;
+        if(variable_name != "") {
+            // Create the replica file
+            std::shared_ptr<Replica_File_Variable> created_variable = element.get()->variable_by_name(variable_name);
+            print("Matt 1", variable_name + " " + replica_file_variable_path);
+            if(created_variable.get() != 0) {
+                print("Matt 2", created_variable.get()->name + " " + std::to_string(created_variable.get()->listed()) + " " + replica_file_variable_path);
+                created_variable.get()->name = variable_name;
+                if(created_variable.get()->listed()) {
+                    // The variable is a list
+                    Replica_File_Variable_List* current_list = reinterpret_cast<Replica_File_Variable_List*>(created_variable.get());
+                    std::vector<std::string> paths = cut_string(variable_content, ";");
+                    for(int i = 0;i<static_cast<int>(paths.size());i++) {
+                        std::shared_ptr<Replica_File_Variable_Element> new_element = std::make_shared<Replica_File_Variable_Element>();
+                        new_element.get()->pattern_list = reinterpret_cast<Pattern_Variable_List*>(current_list->pattern_variable.get());
+                        new_element.get()->parent_variable = created_variable;
+                        new_element.get()->set_pattern(element.get()->pattern);
+                        __load_replica_file_variable_element(new_element, paths[i]);
+                        current_list->elements.push_back(new_element);
+                    }
+                } else {
+                    created_variable.get()->content = read_file(variable_content);
+                }
+            }
+        }
     }
 
     // Exports the project
@@ -461,7 +527,7 @@ namespace scls {
 
     // Load a global variable in the project from sda V 0.2
     void Replica_Project::load_global_variable_sda_0_2(std::string path) {
-        std::string content = to_utf_8_code_point(read_file(path));
+        std::string content = read_file(path);
 
         // Parse the file
         std::string variable_name = ""; int i = 0;
@@ -476,7 +542,7 @@ namespace scls {
     // Load a replica file in the project from sda V 0.2
     void Replica_Project::load_replica_file_sda_0_2(std::string path) {
         if(!std::filesystem::exists(path)) return;
-        std::string content = to_utf_8_code_point(read_file(path));
+        std::string content = read_file(path);
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
 
         // Get the datas about the file
@@ -493,11 +559,11 @@ namespace scls {
                         i++; if(i < static_cast<int>(cutted.size())) internal_path = cutted[i].content;
                     }
                     else if(final_balise_name == "pattern") {
-                        // Get the pattern of the project
+                        // Get the pattern of the file
                         i++; if(i < static_cast<int>(cutted.size())) pattern = cutted[i].content;
                     }
                     else if(final_balise_name == "content_path") {
-                        // Get the pattern of the project
+                        // Get the path of the content of the file
                         i++; if(i < static_cast<int>(cutted.size())) content_path = cutted[i].content;
                     }
                 }
@@ -507,13 +573,51 @@ namespace scls {
         // Load the file
         std::string final_content = "";
         Text_Pattern* final_pattern = 0;
+        std::shared_ptr<Replica_File> result;
         if(pattern != "") {
+            // File with pattern
             final_pattern = attached_pattern()->pattern_by_name(pattern);
-            add_replica_file(internal_path, final_pattern);
+            result = new_replica_file(internal_path, final_pattern);
         }
         else if(content_path != "" && std::filesystem::exists(content_path)) {
-            final_content = to_utf_8_code_point(read_file(content_path));
-            add_replica_file(internal_path, final_content);
+            // File without pattern
+            final_content = read_file(content_path);
+            result = new_replica_file(internal_path, 0);
+            result.get()->content_out_pattern = final_content;
+        }
+        // Load the needed variables
+        __load_replica_file_variable_element(result, path);
+    }
+
+    // Load a replica file variable element in the project from sda V 0.2
+    void Replica_Project::__load_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string path) {
+        if(!std::filesystem::exists(path)) return;
+        std::string content = read_file(path);
+        std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
+
+        // Get the datas about the file
+        std::string local_variables = "";
+        for(int i = 0;i<static_cast<int>(cutted.size());i++) {
+            if(cutted[i].content.size() > 0) {
+                if(cutted[i].content[0] == '<') {
+                    // The part of the text is a balise
+                    std::string final_balise_name = balise_name(cutted[i].content);
+                    if(final_balise_name == "local_variables") {
+                        // Get the local variables of the file
+                        i++; if(i < static_cast<int>(cutted.size())) local_variables = cutted[i].content;
+                    }
+                }
+            }
+        }
+
+        // Create the variable
+        std::vector<std::string> local_variables_path = cut_string(local_variables, ";");
+        for(int i = 0;i<static_cast<int>(local_variables_path.size());i++) {
+            std::string current_path = local_variables_path[i];
+            if(current_path == "") continue;
+
+            // Get the needed variable
+            __add_replica_file_variable_element(element, current_path);
         }
     }
 
@@ -564,6 +668,17 @@ namespace scls {
         return new_project;
     }
 
+    // Creates a new replica file in the project and returns it
+    std::shared_ptr<Replica_File> Replica_Project::new_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern) {
+        // Create the file
+        std::shared_ptr<Replica_File> new_file = std::make_shared<Replica_File>(a_global_variables_values);
+        new_file.get()->internal_path = replica_file_path;
+        new_file.get()->pattern = pattern;
+        replica_files().push_back(new_file);
+
+        return new_file;
+    }
+
     // Returns the path of the attached patter in a replica
     std::string Replica_Project::replica_attached_pattern_from_path_sda_0_2(std::string path) {
         if(!std::filesystem::exists(path)) return 0;
@@ -590,14 +705,68 @@ namespace scls {
     }
 
     // Returns the text to save a replica file
-    std::string Replica_Project::save_replica_file_text_sda_0_2(Replica_File& replica_file, std::string path, unsigned int& total_file_number) {
-        std::string to_return = "<internal_path>" + replica_file.internal_path;
-        if(replica_file.pattern != 0) to_return += "<pattern>" + replica_file.pattern->name().to_std_string();
+    std::string Replica_Project::save_replica_file_text_sda_0_2(Replica_File* replica_file, std::string path, unsigned int& total_file_number) {
+        std::string to_return = "<internal_path>" + replica_file->internal_path;
+
+        // Write the pattern part
+        if(replica_file->pattern != 0) to_return += "<pattern>" + replica_file->pattern->name().to_std_string();
         else {
             std::string new_file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
             to_return += "<content_path>" + new_file_path;
-            write_in_file(new_file_path, replica_file.content_out_pattern);
+            __save_file(new_file_path, replica_file->content_out_pattern);
         }
+
+        // Write the variable part
+        to_return += save_replica_file_variable_element_text_sda_0_2(replica_file, path, total_file_number);
+
+        return to_utf_8(to_return);
+    }
+
+    // Returns the text to save a replica file element
+    std::string Replica_Project::save_replica_file_variable_element_text_sda_0_2(__Replica_File_Variable_Element_Base* element, std::string path, unsigned int& total_file_number) {
+        std::string to_return = "";
+
+        // Write the variable part
+        if(element->variables.size() > 0) {
+            to_return += "<local_variables>";
+            for(int i = 0;i<static_cast<int>(element->variables.size());i++) {
+                std::string new_file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
+                to_return += new_file_path + ";";
+                __save_file(new_file_path, save_replica_file_variable_text_sda_0_2(element->variables[i], path, total_file_number));
+            }
+            if(to_return[to_return.size() - 1] == ';') to_return = to_return.substr(0, to_return.size() - 1);
+        }
+
+        return to_utf_8(to_return);
+    }
+
+    // Returns the text to save a replica file variable
+    std::string Replica_Project::save_replica_file_variable_text_sda_0_2(Replica_File_Variable* replica_file_variable, std::string path, unsigned int& total_file_number) {
+        std::string new_file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
+        std::string to_return = "<name>" + replica_file_variable->name + "<content>" + new_file_path;
+
+        // Write the content of the variable
+        __save_file(new_file_path, replica_file_variable->content);
+
+        return to_utf_8(to_return);
+    }
+
+    // Returns the text to save a replica file variable list
+    std::string Replica_Project::save_replica_file_variable_list_text_sda_0_2(Replica_File_Variable_List* replica_file_variable, std::string path, unsigned int& total_file_number) {
+        std::string new_file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
+        std::string to_return = "<name>" + replica_file_variable->name + "<type>list<content>";
+
+        // Write the content of the variable
+        __save_file(new_file_path, replica_file_variable->content);
+
+        // Store element one by one
+        for(int i = 0;i<static_cast<int>(replica_file_variable->elements.size());i++) {
+            std::string content = save_replica_file_variable_element_text_sda_0_2(replica_file_variable->elements[i], path, total_file_number);
+            std::string current_file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
+            __save_file(current_file_path, content);
+            to_return += current_file_path + ";";
+        } if(to_return[to_return.size() - 1] == ';') to_return = to_return.substr(0, to_return.size() - 1);
+
         return to_utf_8(to_return);
     }
 
@@ -625,7 +794,7 @@ namespace scls {
                 files_content += name() + std::to_string(total_file_number) + ".sdrf";
                 if(i != static_cast<int>(replica_files().size()) - 1) files_content += ";";
                 std::string file_path = path + name() + std::to_string(total_file_number) + ".sdrf"; total_file_number++;
-                write_in_file(file_path, save_replica_file_text_sda_0_2(*replica_files()[i].get(), path, total_file_number));
+                __save_file(file_path, save_replica_file_text_sda_0_2(replica_files()[i].get(), path, total_file_number));
             }
         }
 
@@ -643,14 +812,14 @@ namespace scls {
             int i = 0;
             for(std::map<std::string, std::string>::iterator it = global_variables_values().begin();it!=global_variables_values().end();it++) {
                 std::string file_path = path + name() + std::to_string(i + total_file_number) + ".sdrf";
-                write_in_file(file_path, to_utf_8(it->first + ";" + it->second)); i++;
+                __save_file(file_path, to_utf_8(it->first + ";" + it->second)); i++;
             }
             total_file_number += global_variables_values().size();
         }
 
         // Create the .sdr file
         std::string config_file = "<name>" + name() + "<version>SDA 0.2<pattern_path>" + attached_pattern()->path() + files_content + global_variables_content;
-        write_in_file(path_main_file(), config_file);
+        __save_file(path_main_file(), config_file);
 
         return true;
     }

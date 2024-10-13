@@ -99,6 +99,12 @@
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
+    //*********
+    //
+    // Files / variables handling
+    //
+    //*********
+
     struct License {
         // Struct representing the used license in a project, by default to GPL V3.0
 
@@ -106,6 +112,21 @@ namespace scls {
         std::string name = "GPLv3";
         // Notice of the license
         std::string notice = "This file is part of *.\n\n* is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n* is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\nSee the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with *. If not, see <https://www.gnu.org/licenses/>.";
+    };
+
+    struct Replica_File_Variable {
+        // Struct representing a variable in a replica file
+        // Content if the variable
+        std::string content = "";
+        // If the variable is listed or not
+        virtual bool listed() const {return false;};
+        // Name of the variable
+        std::string name = "";
+        // Pattern variable of this variable
+        std::shared_ptr<Pattern_Variable> pattern_variable;
+
+        // Datas about the pattern variable
+        inline constexpr bool global() const {return pattern_variable.get()->global;};
     };
 
     class __Variables_Value_Container {
@@ -125,7 +146,7 @@ namespace scls {
             for(std::map<std::string, std::string>::iterator it = a_global_variables.begin();it!=a_global_variables.end();it++) { if(it->first == variable) return it->second; } return "";
         };
         // Change the value of a global variable
-        inline void set_global_variable_value(std::string variable_name, std::string new_value) {if(global_variable(variable_name) != 0)a_global_variables[variable_name]=new_value;};
+        inline void set_global_variable_value(std::string variable_name, std::string new_value) {a_global_variables[variable_name]=new_value;};
 
         // Getters and setters
         inline std::map<std::string, std::string>& global_variables() {return a_global_variables;};
@@ -135,43 +156,108 @@ namespace scls {
         std::map<std::string, std::string> a_global_variables = std::map<std::string, std::string>();
     };
 
-    struct Replica_File_Variable {
-        // Struct representing a variable in a replica file
-        // Content if the variable
-        std::string content = "";
-        // Name of the variable
-        std::string name = "";
-    };
-
-    struct Replica_File {
-        // Struct representing a file in a replica project
-        // Constructor
-        Replica_File(const std::shared_ptr<__Variables_Value_Container>& replica_project_global_variables) : global_variables(replica_project_global_variables) { };
-
-        // Content out of the pattern
-        std::string content_out_pattern = "";
-        // Values of the global variable in the replica project
-        std::shared_ptr<__Variables_Value_Container> global_variables;
-        // Internal path of the file
-        std::string internal_path = "";
+    struct __Replica_File_Variable_Element_Base {
+        // Struct representing an element of variable in a replica file
+        // Number of the element
+        unsigned int element_number = 0;
+        // Parent variable of the element
+        std::shared_ptr<Replica_File_Variable> parent_variable;
         // Pattern use by the file
         Text_Pattern* pattern = 0;
+        // Pattern list of this element
+        Pattern_Variable_List* pattern_list = 0;
 
+        // Set the pattern and do the needed operation with
+        void set_pattern(Text_Pattern* new_pattern) {
+            pattern = new_pattern;
+            variables.clear();
+            // Create the needed variables
+            std::vector<std::shared_ptr<Pattern_Variable>>& needed_variables = pattern_list->variables;
+            for(int i = 0;i<static_cast<int>(needed_variables.size());i++) {
+                __create_variable_by_pattern_variable(needed_variables[i]);
+            }
+        };
+
+        // Create a variable from a pattern variable
+        bool __can_variable_be_created(std::shared_ptr<Pattern_Variable> variable) {return !(variable.get() == 0 || variable.get()->global || variable.get()->path_to_root);};
+        virtual std::shared_ptr<Replica_File_Variable> __create_variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) {
+            if(!__can_variable_be_created(variable)) return std::shared_ptr<Replica_File_Variable>();
+            std::shared_ptr<Replica_File_Variable> to_return = std::make_shared<Replica_File_Variable>();
+            to_return.get()->content = variable.get()->content;
+            to_return.get()->name = variable.get()->name;
+            to_return.get()->pattern_variable = variable;
+            variables.push_back(to_return);
+            return to_return;
+        }
         // Returns a variable in the file
+        inline std::shared_ptr<Replica_File_Variable> variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) {
+            for(int i = 0;i<static_cast<int>(variables.size());i++) {
+                if(variables[i].get()->name == variable.get()->name) return variables[i];
+            } return __create_variable_by_pattern_variable(variable);
+        };
         inline std::shared_ptr<Replica_File_Variable> variable_by_name(std::string variable_name) {
-            for(std::map<std::string, std::shared_ptr<Replica_File_Variable>>::iterator it = variables.begin();it!=variables.end();it++) {
-                if(it->first == variable_name) return it->second;
+            for(int i = 0;i<static_cast<int>(variables.size());i++) {
+                if(variables[i].get()->name == variable_name) return variables[i];
             }
 
             // Create the variable if it does not exist
-            std::shared_ptr<Replica_File_Variable> to_return = std::make_shared<Replica_File_Variable>();
-            to_return.get()->name = variable_name;
-            variables[variable_name] = to_return;
-            return to_return;
+            if(pattern != 0) {
+                if(parent_variable.get() != 0) {
+                    return __create_variable_by_pattern_variable(pattern->variable_in_list_by_name(parent_variable.get()->name, variable_name));
+                } return __create_variable_by_pattern_variable(pattern->variable_by_name(variable_name));
+            }
+            else {return std::shared_ptr<Replica_File_Variable>();}
         };
+        // Values of the global variable in the replica project
+        std::shared_ptr<__Variables_Value_Container> global_variables;
         // Defined variables for the file
-        std::map<std::string, std::shared_ptr<Replica_File_Variable>> variables = std::map<std::string, std::shared_ptr<Replica_File_Variable>>();
+        std::vector<std::shared_ptr<Replica_File_Variable>> variables = std::vector<std::shared_ptr<Replica_File_Variable>>();
     };
+
+    struct Replica_File_Variable_List : public Replica_File_Variable {
+        // Struct representing a list of variable in a replica file
+        // List of elements in the list
+        std::vector<std::shared_ptr<__Replica_File_Variable_Element_Base>> elements;
+        // If the variable is listed or not
+        bool listed() const override {return true;};
+    };
+
+    struct Replica_File_Variable_Element : public __Replica_File_Variable_Element_Base {
+        // Struct representing an entire element of variable in a replica file
+        // Create a variable from a pattern variable
+        virtual std::shared_ptr<Replica_File_Variable> __create_variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) override {
+            if(!__can_variable_be_created(variable)) return std::shared_ptr<Replica_File_Variable>();
+            std::shared_ptr<Replica_File_Variable> to_return;
+            std::shared_ptr<Replica_File_Variable_List> to_return_list;
+            if(variable.get()->listed()) {
+                to_return_list = std::make_shared<Replica_File_Variable_List>();
+                to_return = to_return_list;
+            }
+            else {to_return = std::make_shared<Replica_File_Variable>();}
+            to_return.get()->content = variable.get()->content;
+            to_return.get()->name = variable.get()->name;
+            to_return.get()->pattern_variable = variable;
+            variables.push_back(to_return);
+            return to_return;
+        }
+    };
+
+    struct Replica_File: public Replica_File_Variable_Element {
+        // Struct representing a file in a replica project
+        // Constructor
+        Replica_File(const std::shared_ptr<__Variables_Value_Container>& replica_project_global_variables) {global_variables=replica_project_global_variables;};
+
+        // Content out of the pattern
+        std::string content_out_pattern = "";
+        // Internal path of the file
+        std::string internal_path = "";
+    };
+
+    //*********
+    //
+    // Projects handling
+    //
+    //*********
 
     class Pattern_Project {
         // Class representing the entire project
@@ -185,9 +271,10 @@ namespace scls {
         void parse_project();
 
         // Apply all to a part of text
-        std::string __apply_all(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system);
+        std::string __apply_all(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, std::string internal_path, _Balise_Container* balising_system);
+        inline std::string __apply_all(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system){return __apply_all(part_of_text, file, file.internal_path, balising_system);};
         // Apply the global variables to a part of text
-        std::string __apply_global_variables(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system);
+        std::string __apply_global_variables(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, _Balise_Container* balising_system);
         // Returns the content of a file
         std::string file_content(Replica_File& file, _Balise_Container* balising_system);
         // Load a project unformatted from sda V0.1
@@ -236,13 +323,12 @@ namespace scls {
     class Replica_Project {
         // Class representing the entire project
     public:
+
         // Most basic Replica_Project constructor
         Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern);
 
-        // Add a replica file to the project
-        Replica_File* add_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern);
-        // Add a replica file to the project with a std::string content
-        Replica_File* add_replica_file(std::string replica_file_path, std::string content);
+        // Add a replica file variable element to a replica file in the project
+        void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string replica_file_variable_path);
         // Exports the project
         bool export_project(std::string path, _Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
@@ -256,15 +342,40 @@ namespace scls {
         void load_global_variable_sda_0_2(std::string path);
         // Load a replica file in the project from sda V 0.2
         void load_replica_file_sda_0_2(std::string path);
+        // Load a replica file variable element in the project from sda V 0.2
+        void __load_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string path);
         // Load the project from sda V 0.2
         static Replica_Project* load_sda_0_2(std::string path, const std::shared_ptr<Pattern_Project>& pattern);
+        // Creates a new replica file in the project and returns it
+        std::shared_ptr<Replica_File> new_replica_file(std::string replica_file_path, scls::Text_Pattern* pattern);
+        // Remove a replica file from a project
+        void remove_replica_file(Replica_File* file){for(int i=0;i<static_cast<int>(replica_files().size());i++){if(replica_files()[i].get() == file){replica_files().erase(replica_files().begin() + i);break;}}};
+        inline void remove_replica_file(std::shared_ptr<Replica_File> file){remove_replica_file(file.get());};
         // Returns the path of the attached patter in a replica
         static std::string replica_attached_pattern_from_path_sda_0_2(std::string path);
+
+        // Saves a file
+        inline void __save_file(std::string file_path, std::string content) {write_in_file(file_path, to_utf_8(content));};
         // Returns the text to save a replica file
-        std::string save_replica_file_text_sda_0_2(Replica_File& replica_file, std::string path, unsigned int& total_file_number);
+        std::string save_replica_file_text_sda_0_2(Replica_File* replica_file, std::string path, unsigned int& total_file_number);
+        // Returns the text to save a replica file element
+        std::string save_replica_file_variable_element_text_sda_0_2(__Replica_File_Variable_Element_Base* element, std::string path, unsigned int& total_file_number);
+        inline std::string save_replica_file_variable_element_text_sda_0_2(std::shared_ptr<__Replica_File_Variable_Element_Base> element, std::string path, unsigned int& total_file_number){return save_replica_file_variable_element_text_sda_0_2(element.get(), path, total_file_number);};
+        // Returns the text to save a replica file variable
+        std::string save_replica_file_variable_text_sda_0_2(Replica_File_Variable* replica_file_variable, std::string path, unsigned int& total_file_number);
+        inline std::string save_replica_file_variable_text_sda_0_2(std::shared_ptr<Replica_File_Variable> replica_file_variable, std::string path, unsigned int& total_file_number){
+            if(replica_file_variable.get()->listed()) {
+                Replica_File_Variable_List* current_list = reinterpret_cast<Replica_File_Variable_List*>(replica_file_variable.get());
+                return save_replica_file_variable_list_text_sda_0_2(current_list, path, total_file_number);
+            }
+            return save_replica_file_variable_text_sda_0_2(replica_file_variable.get(), path, total_file_number);
+        };
+        // Returns the text to save a replica file variable list
+        std::string save_replica_file_variable_list_text_sda_0_2(Replica_File_Variable_List* replica_file_variable, std::string path, unsigned int& total_file_number);
         // Save the project unformatted
         bool save_sda_0_2(std::string path);
         inline bool save_sda_0_2(){return save_sda_0_2(path());};
+
         // Returns the sorted first path
         std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> replica_files_first_sorted_by_path();
         // Returns the sorted replica files by path
@@ -280,12 +391,15 @@ namespace scls {
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
+        inline std::shared_ptr<Pattern_Project> attached_pattern_shared_ptr() const {return a_pattern;};
         inline std::string global_variable_value(std::string variable_name) {return a_global_variables_values.get()->global_variable_value(variable_name);};
+        inline std::vector<std::shared_ptr<Pattern_Variable>>& global_variables() {return a_pattern->global_variables();};
+        inline std::shared_ptr<Pattern_Variable>* global_variable(std::string variable_name) {return a_pattern->global_variable(variable_name);};
         inline std::map<std::string, std::string>& global_variables_values() {return a_global_variables_values.get()->global_variables();};
         inline std::string path() const {return a_path;};
         inline std::string name() const {return a_name;};
         inline std::vector<std::shared_ptr<Replica_File>>& replica_files() {return a_replica_files;};
-        inline void set_global_variable_value(std::string variable_name, std::string new_value) {a_global_variables_values.get()->set_global_variable_value(variable_name,new_value);};
+        inline void set_global_variable_value(std::string variable_name, std::string new_value) {if(global_variable(variable_name)!=0)a_global_variables_values.get()->set_global_variable_value(variable_name,new_value);};
     private:
         // Datas about the replica project
         // Description of the replica project
