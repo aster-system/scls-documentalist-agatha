@@ -117,11 +117,13 @@ namespace scls {
     struct Replica_File_Variable {
         // Struct representing a variable in a replica file
         // Content if the variable
-        std::string content = "";
+        String content = "";
         // If the variable is listed or not
         virtual bool listed() const {return false;};
         // Name of the variable
         std::string name = "";
+        // Parent variable of this variable
+        std::weak_ptr<Replica_File_Variable> parent_variable;
         // Pattern variable of this variable
         std::shared_ptr<Pattern_Variable> pattern_variable;
 
@@ -180,15 +182,7 @@ namespace scls {
 
         // Create a variable from a pattern variable
         bool __can_variable_be_created(std::shared_ptr<Pattern_Variable> variable) {return !(variable.get() == 0 || variable.get()->global || variable.get()->path_to_root);};
-        virtual std::shared_ptr<Replica_File_Variable> __create_variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) {
-            if(!__can_variable_be_created(variable)) return std::shared_ptr<Replica_File_Variable>();
-            std::shared_ptr<Replica_File_Variable> to_return = std::make_shared<Replica_File_Variable>();
-            to_return.get()->content = variable.get()->content;
-            to_return.get()->name = variable.get()->name;
-            to_return.get()->pattern_variable = variable;
-            variables.push_back(to_return);
-            return to_return;
-        }
+        virtual std::shared_ptr<Replica_File_Variable> __create_variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) = 0;
         // Returns a variable in the file
         inline std::shared_ptr<Replica_File_Variable> variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) {
             for(int i = 0;i<static_cast<int>(variables.size());i++) {
@@ -220,6 +214,16 @@ namespace scls {
         std::vector<std::shared_ptr<__Replica_File_Variable_Element_Base>> elements;
         // If the variable is listed or not
         bool listed() const override {return true;};
+
+        // Returns an element by one of the variable inside it
+        std::shared_ptr<__Replica_File_Variable_Element_Base> element_by_variable(Replica_File_Variable* variable_to_test) {
+            for(int i = 0;i<static_cast<int>(elements.size());i++) {
+                // Analyse each variables
+                for(int j = 0;j<static_cast<int>(elements[i].get()->variables.size());j++) {
+                    if(elements[i].get()->variables[j].get() == variable_to_test) return elements[i];
+                }
+            } return std::shared_ptr<__Replica_File_Variable_Element_Base>();
+        };
     };
 
     struct Replica_File_Variable_Element : public __Replica_File_Variable_Element_Base {
@@ -236,6 +240,7 @@ namespace scls {
             else {to_return = std::make_shared<Replica_File_Variable>();}
             to_return.get()->content = variable.get()->content;
             to_return.get()->name = variable.get()->name;
+            to_return.get()->parent_variable = parent_variable;
             to_return.get()->pattern_variable = variable;
             variables.push_back(to_return);
             return to_return;
@@ -328,7 +333,7 @@ namespace scls {
         Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern);
 
         // Add a replica file variable element to a replica file in the project
-        void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string replica_file_variable_path);
+        void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string replica_file_variable_path, std::shared_ptr<Replica_File_Variable> parent);
         // Exports the project
         bool export_project(std::string path, _Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
@@ -343,7 +348,7 @@ namespace scls {
         // Load a replica file in the project from sda V 0.2
         void load_replica_file_sda_0_2(std::string path);
         // Load a replica file variable element in the project from sda V 0.2
-        void __load_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string path);
+        void __load_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string path, std::shared_ptr<Replica_File_Variable> parent);
         // Load the project from sda V 0.2
         static Replica_Project* load_sda_0_2(std::string path, const std::shared_ptr<Pattern_Project>& pattern);
         // Creates a new replica file in the project and returns it
@@ -355,7 +360,7 @@ namespace scls {
         static std::string replica_attached_pattern_from_path_sda_0_2(std::string path);
 
         // Saves a file
-        inline void __save_file(std::string file_path, std::string content) {write_in_file(file_path, to_utf_8(content));};
+        inline void __save_file(std::string file_path, std::string content) {write_in_file(file_path, content);};
         // Returns the text to save a replica file
         std::string save_replica_file_text_sda_0_2(Replica_File* replica_file, std::string path, unsigned int& total_file_number);
         // Returns the text to save a replica file element
