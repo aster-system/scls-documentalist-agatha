@@ -215,6 +215,11 @@ namespace scls {
         // If the variable is listed or not
         bool listed() const override {return true;};
 
+        // Delete an element in the list
+        void delete_element(__Replica_File_Variable_Element_Base* element) {
+            unsigned int position = element_position(element);
+            elements.erase(elements.begin() + position);
+        };
         // Returns an element by one of the variable inside it
         std::shared_ptr<__Replica_File_Variable_Element_Base> element_by_variable(Replica_File_Variable* variable_to_test) {
             for(int i = 0;i<static_cast<int>(elements.size());i++) {
@@ -223,6 +228,28 @@ namespace scls {
                     if(elements[i].get()->variables[j].get() == variable_to_test) return elements[i];
                 }
             } return std::shared_ptr<__Replica_File_Variable_Element_Base>();
+        };
+        // Returns the position of an element in the list
+        unsigned int element_position(__Replica_File_Variable_Element_Base* element) const {for(int i = 0;i<static_cast<int>(elements.size());i++){if(elements[i].get()==element)return i;}return 0;};
+        // Move downward an element in the list
+        int move_element_down(__Replica_File_Variable_Element_Base* element) {
+            unsigned int position = element_position(element);
+            if(position < elements.size() - 1) {
+                std::shared_ptr<__Replica_File_Variable_Element_Base> temp = elements[position];
+                elements[position] = elements[position + 1];
+                elements[position + 1] = temp;
+                return position + 1;
+            } return -1;
+        };
+        // Move upwards an element in the list
+        int move_element_up(__Replica_File_Variable_Element_Base* element) {
+            unsigned int position = element_position(element);
+            if(position > 0) {
+                std::shared_ptr<__Replica_File_Variable_Element_Base> temp = elements[position];
+                elements[position] = elements[position - 1];
+                elements[position - 1] = temp;
+                return position - 1;
+            } return -1;
         };
     };
 
@@ -333,7 +360,7 @@ namespace scls {
         Replica_Project(std::string name, std::string path, const std::shared_ptr<Pattern_Project>& pattern);
 
         // Add a replica file variable element to a replica file in the project
-        void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string replica_file_variable_path, std::shared_ptr<Replica_File_Variable> parent);
+        void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string main_path, std::string replica_file_variable_path, std::shared_ptr<Replica_File_Variable> parent);
         // Exports the project
         bool export_project(std::string path, _Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
@@ -344,11 +371,11 @@ namespace scls {
             return 0;
         };
         // Load a global variable in the project from sda V 0.2
-        void load_global_variable_sda_0_2(std::string path);
+        void load_global_variable_sda_0_2(std::string main_path, std::string file_path);
         // Load a replica file in the project from sda V 0.2
-        void load_replica_file_sda_0_2(std::string path);
+        void load_replica_file_sda_0_2(std::string main_path, std::string file_path);
         // Load a replica file variable element in the project from sda V 0.2
-        void __load_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string path, std::shared_ptr<Replica_File_Variable> parent);
+        void __load_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> element, std::string main_path, std::string file_path, std::shared_ptr<Replica_File_Variable> parent);
         // Load the project from sda V 0.2
         static Replica_Project* load_sda_0_2(std::string path, const std::shared_ptr<Pattern_Project>& pattern);
         // Creates a new replica file in the project and returns it
@@ -360,7 +387,7 @@ namespace scls {
         static std::string replica_attached_pattern_from_path_sda_0_2(std::string path);
 
         // Saves a file
-        inline void __save_file(std::string file_path, std::string content) {write_in_file(file_path, content);};
+        inline void __save_file(std::string root_path, std::string file_path, std::string content) {if(root_path[root_path.size()-1]!='/')root_path+="/";write_in_file(root_path + file_path, content);};
         // Returns the text to save a replica file
         std::string save_replica_file_text_sda_0_2(Replica_File* replica_file, std::string path, unsigned int& total_file_number);
         // Returns the text to save a replica file element
@@ -387,12 +414,7 @@ namespace scls {
         std::shared_ptr<std::vector<std::shared_ptr<Replica_File>>> replica_files_sorted_by_path();
 
         // Returns the path of the main file of the project
-        inline std::string path_main_file() const {
-            std::string to_return = path();
-            if(to_return[to_return.size() - 1] != '/') to_return += "/";
-            to_return += name() + ".sdr";
-            return to_return;
-        };
+        inline std::string path_main_file() const {std::string to_return = path();if(to_return[to_return.size() - 1] != '/') to_return += "/";to_return += name() + ".sdr";return to_return;};
 
         // Getters and setters
         inline Pattern_Project* attached_pattern() const {return a_pattern.get();};
