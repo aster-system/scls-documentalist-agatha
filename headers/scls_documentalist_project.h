@@ -303,12 +303,12 @@ namespace scls {
         void parse_project();
 
         // Apply all to a part of text
-        std::string __apply_all(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, std::string internal_path, _Balise_Container* balising_system);
-        inline std::string __apply_all(const std::string& part_of_text, Replica_File& file, _Balise_Container* balising_system){return __apply_all(part_of_text, file, file.internal_path, balising_system);};
+        std::string __apply_all(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, std::string internal_path, __Balise_Container* balising_system);
+        inline std::string __apply_all(const std::string& part_of_text, Replica_File& file, __Balise_Container* balising_system){return __apply_all(part_of_text, file, file.internal_path, balising_system);};
         // Apply the global variables to a part of text
-        std::string __apply_global_variables(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, _Balise_Container* balising_system);
+        std::string __apply_global_variables(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, __Balise_Container* balising_system);
         // Returns the content of a file
-        std::string file_content(Replica_File& file, _Balise_Container* balising_system);
+        std::string file_content(Replica_File& file, __Balise_Container* balising_system);
         // Load a project unformatted from sda V0.1
         static Pattern_Project* load_sda_0_1(std::string path);
         // Save the project unformatted
@@ -362,7 +362,7 @@ namespace scls {
         // Add a replica file variable element to a replica file in the project
         void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string main_path, std::string replica_file_variable_path, std::shared_ptr<Replica_File_Variable> parent);
         // Exports the project
-        bool export_project(std::string path, _Balise_Container* balising_system);
+        bool export_project(std::string path, __Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
         Replica_File* replica_file_by_path(std::string replica_file_path) {
             for(int i = 0;i<static_cast<int>(replica_files().size());i++) {

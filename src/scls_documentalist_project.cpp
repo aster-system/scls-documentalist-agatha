@@ -40,7 +40,7 @@ namespace scls {
     Pattern_Project::Pattern_Project(std::string name, std::string path) : a_name(name), a_path(path) { }
 
     // Apply all to a part of text
-    std::string Pattern_Project::__apply_all(const std::string& base_pattern_content, __Replica_File_Variable_Element_Base& file, std::string internal_path, _Balise_Container* balising_system) {
+    std::string Pattern_Project::__apply_all(const std::string& base_pattern_content, __Replica_File_Variable_Element_Base& file, std::string internal_path, __Balise_Container* balising_system) {
         // Handle global variable
         std::string pattern_content = __apply_global_variables(base_pattern_content, file, balising_system);
         std::string to_return = "";
@@ -115,7 +115,7 @@ namespace scls {
     }
 
     // Apply the global variables to a part of text
-    std::string Pattern_Project::__apply_global_variables(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, _Balise_Container* balising_system) {
+    std::string Pattern_Project::__apply_global_variables(const std::string& part_of_text, __Replica_File_Variable_Element_Base& file, __Balise_Container* balising_system) {
         std::string to_return = "";
 
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(part_of_text);
@@ -150,7 +150,7 @@ namespace scls {
     }
 
     // Returns the content of a file
-    std::string Pattern_Project::file_content(Replica_File& file, _Balise_Container* balising_system) {
+    std::string Pattern_Project::file_content(Replica_File& file, __Balise_Container* balising_system) {
         std::string to_return = "";
         if(!contains_pattern(file.pattern)) return to_return;
         std::string base_pattern_content = balising_system->plain_text(file.pattern->base_text().to_utf_8());
@@ -492,7 +492,7 @@ namespace scls {
     }
 
     // Exports the project
-    bool Replica_Project::export_project(std::string path, _Balise_Container* balising_system) {
+    bool Replica_Project::export_project(std::string path, __Balise_Container* balising_system) {
         if(!std::filesystem::exists(path)) {
             scls::print("Warning", "SCLS Documentalist replica \"" + name() + "\" export", "The path \"" + path + "\" where you want to export the replica does not exist.");
             return false;
@@ -848,7 +848,9 @@ namespace scls {
         for(int i = 0;i<static_cast<int>(files.get()->size());i++) {
             std::string& current_path = files.get()->at(i)->internal_path;
             std::vector<std::string> cutted = cut_path(current_path);
-            if(!contains(to_return_path, cutted[0])) {
+            bool contains = false;
+            for(int j = 0;j<static_cast<int>(to_return_path.size());j++) {if(to_return_path[j] == cutted[0]){contains = true;break;}}
+            if(contains) {
                 to_return.get()->push_back(files.get()->at(i));
                 to_return_path.push_back(cutted[0]);
             }
