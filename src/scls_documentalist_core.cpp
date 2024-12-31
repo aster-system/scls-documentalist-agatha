@@ -104,9 +104,9 @@ namespace scls {
         // Analyse each balises
         std::vector<std::shared_ptr<Pattern_Variable_List>> variable_lists;
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
                 // The part is a balise
-                std::string current_balise = formatted_balise(cutted[i].content);
+                std::string current_balise = formatted_balise(cutted[i].balise_content);
                 std::string current_balise_name = balise_name(current_balise);
                 // Remove the < and >
                 current_balise = current_balise.substr(1, current_balise.size() - 2);
@@ -119,8 +119,8 @@ namespace scls {
                     if(new_variable.get()->listed()) {
                         int level = 1; i++;
                         while(i<static_cast<int>(cutted.size())) {
-                            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
-                                current_balise = formatted_balise(cutted[i].content);
+                            if(cutted[i].balise_content.size() > 0) {
+                                current_balise = formatted_balise(cutted[i].balise_content);
                                 current_balise_name = balise_name(current_balise);
                                 // Remove the < and >
                                 current_balise = current_balise.substr(1, current_balise.size() - 2);
@@ -129,7 +129,7 @@ namespace scls {
                                     if(level == 0) break;
                                 }
                             }
-                            variable_content += cutted[i].content;
+                            variable_content += cutted[i].balise_content + cutted[i].content;
                             i++;
                         }
                         new_variable.get()->content = variable_content;

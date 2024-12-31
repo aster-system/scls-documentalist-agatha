@@ -48,9 +48,9 @@ namespace scls {
         // Handle built-in variables variable
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(pattern_content);
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
                 // The part is a balise
-                std::string current_balise_formated = formatted_balise(cutted[i].content);
+                std::string current_balise_formated = formatted_balise(cutted[i].balise_content);
                 std::string current_balise_name = balise_name(current_balise_formated);
                 if(current_balise_name == "scls_var") {
                     // Remove the < and >
@@ -75,8 +75,8 @@ namespace scls {
                         int level = 1; i++;
                         std::string variable_content = "";
                         while(i<static_cast<int>(cutted.size())) {
-                            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
-                                current_balise_formated = formatted_balise(cutted[i].content);
+                            if(cutted[i].balise_content.size() > 0) {
+                                current_balise_formated = formatted_balise(cutted[i].balise_content);
                                 current_balise_name = balise_name(current_balise_formated);
                                 // Remove the < and >
                                 current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
@@ -85,7 +85,7 @@ namespace scls {
                                     if(level == 0) break;
                                 }
                             }
-                            variable_content += cutted[i].content;
+                            variable_content += cutted[i].balise_content + cutted[i].content;
                             i++;
                         }
 
@@ -104,7 +104,7 @@ namespace scls {
                     }
                 }
                 else {
-                    current_balise_formated = cutted[i].content.substr(1, current_balise_formated.size() - 2);
+                    current_balise_formated = cutted[i].balise_content.substr(1, current_balise_formated.size() - 2);
                     to_return += "<" + __apply_all(current_balise_formated, file, internal_path, balising_system) + ">";
                 }
             }
@@ -120,9 +120,9 @@ namespace scls {
 
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(part_of_text);
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0 && cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
                 // The part is a balise
-                std::string current_balise_formated = formatted_balise(cutted[i].content);
+                std::string current_balise_formated = formatted_balise(cutted[i].balise_content);
                 std::string current_balise_name = balise_name(current_balise_formated);
                 if(current_balise_name == "scls_var") {
                     // Remove the < and >
@@ -138,7 +138,7 @@ namespace scls {
                     }
                 }
                 else {
-                    to_return += cutted[i].content;
+                    to_return += cutted[i].balise_content;
                 }
             }
             else {
@@ -170,10 +170,10 @@ namespace scls {
         std::vector<std::string> files = std::vector<std::string>();
         std::string final_name = "";
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0) {
-                if(cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
+                if(cutted[i].balise_content[0] == '<') {
                     // The part of the text is a balise
-                    std::string final_balise_name = balise_name(cutted[i].content);
+                    std::string final_balise_name = balise_name(cutted[i].balise_content);
                     if(final_balise_name == "name") {
                         // Get the name of the project
                         i++; if(i < static_cast<int>(cutted.size())) final_name = cutted[i].content;
@@ -443,10 +443,10 @@ namespace scls {
         std::string content = read_file(path);
         std::vector<_Text_Balise_Part> cutted = cut_string_by_balise(content);
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0) {
-                if(cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
+                if(cutted[i].balise_content[0] == '<') {
                     // The part of the text is a balise
-                    std::string final_balise_name = balise_name(cutted[i].content);
+                    std::string final_balise_name = balise_name(cutted[i].balise_content);
                     if(final_balise_name == "name") {
                         // Get the name of the project
                         i++; if(i < static_cast<int>(cutted.size())) variable_name = cutted[i].content;
@@ -561,10 +561,10 @@ namespace scls {
         std::string internal_path = "";
         std::string pattern = "";
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0) {
-                if(cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
+                if(cutted[i].balise_content[0] == '<') {
                     // The part of the text is a balise
-                    std::string final_balise_name = balise_name(cutted[i].content);
+                    std::string final_balise_name = balise_name(cutted[i].balise_content);
                     if(final_balise_name == "internal_path") {
                         // Get the name of the project
                         i++; if(i < static_cast<int>(cutted.size())) internal_path = cutted[i].content;
@@ -613,13 +613,13 @@ namespace scls {
         // Get the datas about the file
         std::string local_variables = "";
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0) {
-                if(cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
+                if(cutted[i].balise_content[0] == '<') {
                     // The part of the text is a balise
-                    std::string final_balise_name = balise_name(cutted[i].content);
+                    std::string final_balise_name = balise_name(cutted[i].balise_content);
                     if(final_balise_name == "local_variables") {
                         // Get the local variables of the file
-                        i++; if(i < static_cast<int>(cutted.size())) local_variables = cutted[i].content;
+                        i++; if(i < static_cast<int>(cutted.size())) {local_variables = cutted[i].content;}
                     }
                 }
             }
@@ -648,10 +648,10 @@ namespace scls {
         std::string final_name = "";
         std::vector<std::string> global_variables = std::vector<std::string>();
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0) {
-                if(cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
+                if(cutted[i].balise_content[0] == '<') {
                     // The part of the text is a balise
-                    std::string final_balise_name = balise_name(cutted[i].content);
+                    std::string final_balise_name = balise_name(cutted[i].balise_content);
                     if(final_balise_name == "name") {
                         // Get the name of the project
                         i++; if(i < static_cast<int>(cutted.size())) final_name = cutted[i].content;
@@ -704,19 +704,17 @@ namespace scls {
         std::vector<std::string> files = std::vector<std::string>();
         std::string final_name = "";
         for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-            if(cutted[i].content.size() > 0) {
-                if(cutted[i].content[0] == '<') {
+            if(cutted[i].balise_content.size() > 0) {
+                if(cutted[i].balise_content[0] == '<') {
                     // The part of the text is a balise
-                    std::string final_balise_name = balise_name(cutted[i].content);
+                    std::string final_balise_name = balise_name(cutted[i].balise_content);
                     if(final_balise_name == "pattern_path") {
                         // Get the path of pattern of the project
-                        i++; if(i < static_cast<int>(cutted.size())) return cutted[i].content; else return "";
+                        i++; if(i < static_cast<int>(cutted.size())){return cutted[i].content;} else {return std::string("");}
                     }
                 }
             }
-        }
-
-        return "";
+        } return std::string("");
     }
 
     // Returns the text to save a replica file
