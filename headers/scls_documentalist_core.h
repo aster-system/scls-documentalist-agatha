@@ -141,9 +141,9 @@ namespace scls {
     private:
 
         // Base text
-        String a_base_text = "";
+        String a_base_text;
         // Name of the pattern
-        String a_name = "";
+        String a_name;
 
         // Global variables loaded
         std::vector<std::shared_ptr<Pattern_Variable>> a_global_variables;

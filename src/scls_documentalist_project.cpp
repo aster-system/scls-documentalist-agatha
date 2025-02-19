@@ -81,7 +81,12 @@ namespace scls {
                                 // Remove the < and >
                                 current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
                                 if(current_balise_name == "scls_var") {
-                                    if(current_balise_formated[0] == '/') level--;
+                                    if(current_balise_formated[0] == '/'){level--;}
+                                    else{
+                                        std::shared_ptr<Pattern_Variable> analyzed_variable_shared_ptr = __analyse_pattern_variable(current_balise_formated, 0);
+                                        Pattern_Variable* analyzed_variable=analyzed_variable_shared_ptr.get();
+                                        if(analyzed_variable->listed()){level++;}
+                                    }
                                     if(level == 0) break;
                                 }
                             }
