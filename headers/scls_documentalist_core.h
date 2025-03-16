@@ -113,18 +113,8 @@ namespace scls {
         void parse_pattern_variable_list(std::shared_ptr<Pattern_Variable_List> variable) {__parse_pattern(variable.get()->content, std::shared_ptr<Pattern_Variable>(), variable.get()->global_variables, a_global_variables, variable.get()->variables);};
 
         // Returns a variable by its name
-        inline std::shared_ptr<Pattern_Variable> variable_by_name(std::string variable_name) const {
-            for(int i = 0;i<static_cast<int>(a_variables.size());i++) {
-                if(a_variables.at(i).get()->name == variable_name) return a_variables.at(i);
-            }
-            return std::shared_ptr<Pattern_Variable>();
-        };
-        inline std::shared_ptr<Pattern_Variable> variable_in_list_by_name(std::string list_name, std::string variable_name) const {
-            Pattern_Variable_List* used_list = variable_list_by_name(list_name); if(used_list == 0) return std::shared_ptr<Pattern_Variable>();
-            for(int i = 0;i<static_cast<int>(used_list->variables.size());i++) {
-                if(used_list->variables.at(i).get()->name == variable_name) return used_list->variables.at(i);
-            } return std::shared_ptr<Pattern_Variable>();
-        };
+        inline std::shared_ptr<Pattern_Variable> variable_by_name(std::string variable_name) const {for(int i = 0;i<static_cast<int>(a_variables.size());i++) {if(a_variables.at(i).get()->name == variable_name) return a_variables.at(i);}return std::shared_ptr<Pattern_Variable>();};
+        inline std::shared_ptr<Pattern_Variable> variable_in_list_by_name(std::string list_name, std::string variable_name) const {Pattern_Variable_List* used_list = variable_list_by_name(list_name); if(used_list == 0) return std::shared_ptr<Pattern_Variable>();for(int i = 0;i<static_cast<int>(used_list->variables.size());i++) {if(used_list->variables.at(i).get()->name == variable_name) return used_list->variables.at(i);} return std::shared_ptr<Pattern_Variable>();};
         inline Pattern_Variable_List* variable_list_by_name(std::string variable_name) const {
             for(int i = 0;i<static_cast<int>(a_variables.size());i++) {
                 if(a_variables.at(i).get()->name == variable_name && a_variables.at(i).get()->listed()) return reinterpret_cast<Pattern_Variable_List*>(a_variables.at(i).get());

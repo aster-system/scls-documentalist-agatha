@@ -40,18 +40,8 @@
 namespace scls {
 
     // Contains if a vector of std::shared_ptr<Pattern_Variable> contains a certain Pattern_Variable
-    bool __contains_variable(std::vector<std::shared_ptr<Pattern_Variable>>& variables, std::shared_ptr<Pattern_Variable> variable) {
-        for(int i = 0;i<static_cast<int>(variables.size());i++) {
-            if(variables[i].get() == variable.get()) return true;
-        }
-        return false;
-    }
-    bool __contains_variable(std::vector<Pattern_Variable>& to_test, std::string variable_name) {
-        for(int i = 0;i<static_cast<int>(to_test.size());i++) {
-            if(to_test[i].name == variable_name) return true;
-        }
-        return false;
-    };
+    bool __contains_variable(std::vector<std::shared_ptr<Pattern_Variable>>& variables, std::shared_ptr<Pattern_Variable> variable) {for(int i = 0;i<static_cast<int>(variables.size());i++) {if(variables[i].get() == variable.get()){return true;}}return false;};
+    bool __contains_variable(std::vector<Pattern_Variable>& to_test, std::string variable_name){for(int i = 0;i<static_cast<int>(to_test.size());i++) {if(to_test[i].name == variable_name){return true;}}return false;};
 
     // Analyse a pattern variable
     std::shared_ptr<Pattern_Variable> __analyse_pattern_variable(std::string content, std::vector<std::shared_ptr<Pattern_Variable_List>>* lists) {

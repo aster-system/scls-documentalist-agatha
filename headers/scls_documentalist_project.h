@@ -122,6 +122,8 @@ namespace scls {
         virtual bool listed() const {return false;};
         // Name of the variable
         std::string name = "";
+        // Pattern of this variable
+        Text_Pattern* pattern;
         // Parent variable of this variable
         std::weak_ptr<Replica_File_Variable> parent_variable;
         // Pattern variable of this variable
@@ -175,15 +177,14 @@ namespace scls {
             variables.clear();
             // Create the needed variables
             std::vector<std::shared_ptr<Pattern_Variable>>& needed_variables = pattern_list->variables;
-            for(int i = 0;i<static_cast<int>(needed_variables.size());i++) {
-                __create_variable_by_pattern_variable(needed_variables[i]);
-            }
+            for(int i = 0;i<static_cast<int>(needed_variables.size());i++) {__create_variable_by_pattern_variable(needed_variables[i]);}
         };
 
         // Create a variable from a pattern variable
         bool __can_variable_be_created(std::shared_ptr<Pattern_Variable> variable) {return !(variable.get() == 0 || variable.get()->global || variable.get()->path_to_root);};
         virtual std::shared_ptr<Replica_File_Variable> __create_variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) = 0;
         // Returns a variable in the file
+        inline void set_variable_value(std::string variable, String value){variable_by_name(variable).get()->content = value;};
         inline std::shared_ptr<Replica_File_Variable> variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) {
             for(int i = 0;i<static_cast<int>(variables.size());i++) {
                 if(variables[i].get()->name == variable.get()->name) return variables[i];
@@ -216,10 +217,8 @@ namespace scls {
         bool listed() const override {return true;};
 
         // Delete an element in the list
-        void delete_element(__Replica_File_Variable_Element_Base* element) {
-            unsigned int position = element_position(element);
-            elements.erase(elements.begin() + position);
-        };
+        void delete_element(int position) {elements.erase(elements.begin() + position);};
+        void delete_element(__Replica_File_Variable_Element_Base* element) {delete_element(element_position(element));};
         // Returns an element by one of the variable inside it
         std::shared_ptr<__Replica_File_Variable_Element_Base> element_by_variable(Replica_File_Variable* variable_to_test) {
             for(int i = 0;i<static_cast<int>(elements.size());i++) {
@@ -251,6 +250,18 @@ namespace scls {
                 return position - 1;
             } return -1;
         };
+
+        // Adds an element in the list
+        template <typename T = __Replica_File_Variable_Element_Base> std::shared_ptr<T> new_element_shared_ptr() {
+            std::shared_ptr<T> to_add = std::make_shared<T>();
+            to_add.get()->element_number = elements.size();
+            //new_element.get()->parent_variable = parent_variable;
+            to_add.get()->pattern_list = reinterpret_cast<Pattern_Variable_List*>(pattern_variable.get());
+            to_add.get()->set_pattern(pattern);
+            elements.push_back(to_add);
+            return to_add;
+        };
+        template <typename T = __Replica_File_Variable_Element_Base> inline T* new_element(){return new_element_shared_ptr<T>().get();};
     };
 
     struct Replica_File_Variable_Element : public __Replica_File_Variable_Element_Base {
@@ -268,10 +279,14 @@ namespace scls {
             to_return.get()->content = variable.get()->content;
             to_return.get()->name = variable.get()->name;
             to_return.get()->parent_variable = parent_variable;
+            to_return.get()->pattern = pattern;
             to_return.get()->pattern_variable = variable;
             variables.push_back(to_return);
             return to_return;
         }
+
+        // Returns a variable list (or 0 if the variable is not a list)
+        inline Replica_File_Variable_List* variable_list(std::string variable_name){Replica_File_Variable* variable = variable_by_name(variable_name).get();if(variable != 0 && variable->listed()){return reinterpret_cast<Replica_File_Variable_List*>(variable);}return 0;};
     };
 
     struct Replica_File: public Replica_File_Variable_Element {
@@ -362,6 +377,7 @@ namespace scls {
         // Add a replica file variable element to a replica file in the project
         void __add_replica_file_variable_element(std::shared_ptr<Replica_File_Variable_Element> replica_file_variable_element, std::string main_path, std::string replica_file_variable_path, std::shared_ptr<Replica_File_Variable> parent);
         // Exports the project
+        inline std::string export_path(std::string path){if(path[path.size() - 1] != '/') path += "/";path += name() + "_export/";return path;};
         bool export_project(std::string path, __Balise_Container* balising_system);
         // Returns a replica file by its path, or 0 if there is no this path
         Replica_File* replica_file_by_path(std::string replica_file_path) {

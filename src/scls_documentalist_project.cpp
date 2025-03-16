@@ -509,8 +509,7 @@ namespace scls {
         }
 
         // Create the directory
-        if(path[path.size() - 1] != '/') path += "/";
-        path += name() + "_export/";
+        path = export_path(path);
         if(!std::filesystem::exists(path)) std::filesystem::create_directory(path);
 
         // Export each files
