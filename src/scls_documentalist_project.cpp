@@ -594,11 +594,14 @@ namespace scls {
             final_pattern = attached_pattern()->pattern_by_name(pattern);
             result = new_replica_file(internal_path, final_pattern);
         }
-        else if(content_path != "" && std::filesystem::exists(content_path)) {
-            // File without pattern
-            final_content = read_file(content_path);
-            result = new_replica_file(internal_path, 0);
-            result.get()->content_out_pattern = final_content;
+        else if(content_path != std::string()) {
+            if(!std::filesystem::exists(content_path)){content_path = main_path + std::string("/") + content_path;}
+            if(std::filesystem::exists(content_path)) {
+                // File without pattern
+                final_content = read_file(content_path);
+                result = new_replica_file(internal_path, 0);
+                result.get()->content_out_pattern = final_content;
+            }
         }
         // Load the needed variables
         __load_replica_file_variable_element(result, main_path, file_path, std::shared_ptr<Replica_File_Variable>());

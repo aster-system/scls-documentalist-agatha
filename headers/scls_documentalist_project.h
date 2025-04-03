@@ -130,7 +130,7 @@ namespace scls {
         std::shared_ptr<Pattern_Variable> pattern_variable;
 
         // Datas about the pattern variable
-        inline constexpr bool global() const {return pattern_variable.get()->global;};
+        inline bool global() const {return pattern_variable.get()->global;};
     };
 
     class __Variables_Value_Container {
