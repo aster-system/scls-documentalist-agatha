@@ -149,7 +149,7 @@ namespace scls {
     }
 
     // Most basic _Text_Pattern_Core constructor
-    Text_Pattern::Text_Pattern(String name, String base_text) : a_name(name), a_base_text(base_text) {}
+    Text_Pattern::Text_Pattern(String name, String base_text) : a_base_text(base_text), a_name(name) {}
 
     // Text_Pattern destructor
     Text_Pattern::~Text_Pattern() {}

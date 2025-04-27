@@ -57,16 +57,7 @@ namespace scls {
                     current_balise_formated = current_balise_formated.substr(1, current_balise_formated.size() - 2);
                     std::shared_ptr<Pattern_Variable> current_variable_shared_ptr = __analyse_pattern_variable(current_balise_formated, 0);
                     Pattern_Variable* current_variable = current_variable_shared_ptr.get();
-                    if(current_variable->path_to_root) {
-                        // The variable is the path to the root
-                        std::string current_path = "/base/" + internal_path;
-                        std::string to_add = replace(std::filesystem::relative("/base/", current_path).string(), "\\", "/");
-                        if(to_add.size() > 0) {
-                            if(to_add[0] != '.') to_add = "." + to_add; if(to_add[to_add.size() - 1] == '/') to_add = to_add.substr(0, to_add.size() - 1);
-                            while(to_add.size() > 0 && to_add[to_add.size() - 1] == '.') to_add = to_add.substr(0, to_add.size() - 1);
-                        } if(to_add == "") to_add = "./";
-                        to_return += balising_system->plain_text(to_add);
-                    }
+                    if(current_variable->path_to_root) {to_return += path_to_root(internal_path);}
                     else if(current_variable->listed()) {
                         // Apply a list of variable
                         Replica_File_Variable_List* current_list = reinterpret_cast<Replica_File_Variable_List*>(file.variable_by_name(current_variable->name).get());
@@ -243,6 +234,18 @@ namespace scls {
         return &patterns()[patterns().size() - 1];
     }
 
+    // Returns the path to the root of a path
+    std::string Pattern_Project::path_to_root(std::string needed_path) {
+        std::string current_path = "/base/" + needed_path;
+        std::string to_add = replace(std::filesystem::relative("/base/", current_path).string(), "\\", "/");
+        if(to_add.size() > 0) {
+            if(to_add[0] != '.'){to_add = "." + to_add;} if(to_add[to_add.size() - 1] == '/') to_add = to_add.substr(0, to_add.size() - 1);
+            while(to_add.size() > 0 && to_add[to_add.size() - 1] == '.'){to_add = to_add.substr(0, to_add.size() - 1);}
+        }
+        if(to_add == ""){to_add = "./";}
+        return to_add;
+    }
+
     // Save the project unformatted
     bool Pattern_Project::save_sda_0_1(std::string path) {
         if(!std::filesystem::exists(path)) {
@@ -275,155 +278,6 @@ namespace scls {
 
         return true;
     }
-
-    /*// Returns a pointer to a SCLS Format "Mary" formatted C++ project created with the new constructor
-    Pattern_Project* cpp_scls_format_project(std::string project_name, std::string project_path) {
-        Pattern_Project* project = new Pattern_Project(project_name, project_path);
-
-        // Create global variables
-        std::string license_description = "";
-        license_description += "This file is part of " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " project.\n\n";
-        license_description += SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n";
-        license_description += SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
-        license_description += "See the GNU General Public License for more details.\n\n";
-        license_description += "You should have received a copy of the GNU General Public License along with " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + ". If not, see <https://www.gnu.org/licenses/>.";
-
-        std::string project_description = "";
-        project_description += "SCLS Documentalist is a part of the SCLS library.\n\n";
-        project_description += "SLCS is a set of C++ library, made to make C++ development easier.\n";
-        project_description += "For more information, see https://aster-system.github.io/aster-system/projects/scls.html.\n\n";
-        project_description += "The Documentalist part is a part of the library made to handle easily file documentation.\n";
-        project_description += "For that, it uses the SCLS Format \"Mary\" C++ format.\n";
-        project_description += "For more information, see https://aster-system.github.io/aster-system/scls/documentalist.html.";
-
-        project->set_global_variable(SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE, "GPL V3.0");
-        project->set_global_variable(SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE, license_description);
-        project->set_global_variable(SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE, project_description);
-        project->set_global_variable(SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE, "SCLS Documentalist");
-
-        std::string big_separation_pattern = "\n\n////////////////////////////////////////////////////////\n//****************************************************\n////////////////////////////////////////////////////////\n\n\n";
-        std::string external_separation_pattern = "////////////////////////////\n";
-        std::string separation_pattern = "//******************\n";
-        std::string pattern = "";
-
-        // Create cpp pattern
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " -> " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + "file_path" + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " description\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + "file_name_extension" + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " description\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + "file_description-*>\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// License description (" + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + ")\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// This project uses the Aster System SCLS Format \"Mary\" code format, in the public domain.\n";
-        pattern += "// It is also formatted using the Aster System SCLS Documentalist \"Agatha\" library under the GPL V3.0 license.\n";
-        pattern += "// See https://aster-system.github.io/aster-system/projects/scls.html for more informations.\n";
-        pattern += "//\n";
-        // Set the project preprocessors
-        // Set the include part
-        pattern += external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// Included files\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_INCLUDE_PATH + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " -> " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#include " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_INCLUDE_PATH + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        // Set the macro part
-        pattern += "\n" + external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// Macros definitions\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " -> " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_MACRO_DESCRIPTION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#ifndef " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#define " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_MACRO_CONTENT + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#endif // " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        // Set the code part
-        pattern += external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_TITLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_CODE_PART_TITLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_CODE_PART + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n\n";
-        Text_Pattern* project_pattern = project->new_pattern("file_cpp", pattern);
-
-        // Create header pattern
-        // Set the project presentation
-        pattern = "";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " -> " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + "file_path" + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_PROJECT_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " description\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_PROJECT_DESCRIPTION_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + "file_name_extension" + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " description\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + "file_description-*>\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// License description (" + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_LICENCE_NAME_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + ")\n";
-        pattern += "//\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_LICENCE_DESCRIPTION_VARIABLE + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "//\n";
-        pattern += "//\n";
-        pattern += "// This project uses the Aster System SCLS Format \"Mary\" code format, in the public domain.\n";
-        pattern += "// It is also formatted using the Aster System SCLS Documentalist \"Agatha\" library under the GPL V3.0 license.\n";
-        pattern += "// See https://aster-system.github.io/aster-system/projects/scls.html for more informations.\n";
-        pattern += "//\n";
-        // Set the project preprocessors
-        pattern = "";
-        pattern += external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// Avoid multiple header repetitions\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "#ifndef " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n#define " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY;
-        pattern += "\n";
-        // Set the include part
-        pattern += "\n" + external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// Included files\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_INCLUDE_PATH + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " -> " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_INCLUDE_DESCRIPTION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#include " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_INCLUDE_PATH + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        // Set the macro part
-        pattern += "\n" + external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// Macros definitions\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "// " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " -> " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_MACRO_DESCRIPTION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#ifndef " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#define " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + " " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_MACRO_CONTENT + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        pattern += "#endif // " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_MACRO_NAME + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY + "\n";
-        // Set the project last endif
-        pattern = "";
-        pattern += external_separation_pattern;
-        pattern += "//\n";
-        pattern += "// Avoid multiple header repetitions\n";
-        pattern += "//\n";
-        pattern += external_separation_pattern + "\n";
-        pattern += "#endif // " + SCLS_BALISE_START_PLAIN_TEXT_STD_STRING + SCLS_DOCUMENTALIST_VARIABLE_KEYWORD + " " + SCLS_DOCUMENTALIST_AVOID_HEADER_REPETITION + SCLS_BALISE_END_PLAIN_TEXT_CHAR_ARRAY;
-        project_pattern = project->new_pattern("file_h", pattern);
-
-        return project;
-    }; //*/
 
     // Pattern_Project destructor
     Pattern_Project::~Pattern_Project() {}

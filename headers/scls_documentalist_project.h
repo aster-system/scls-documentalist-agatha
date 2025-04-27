@@ -117,7 +117,7 @@ namespace scls {
     struct Replica_File_Variable {
         // Struct representing a variable in a replica file
         // Content if the variable
-        String content = "";
+        String content;
         // If the variable is listed or not
         virtual bool listed() const {return false;};
         // Name of the variable
@@ -326,6 +326,8 @@ namespace scls {
         std::string file_content(Replica_File& file, __Balise_Container* balising_system);
         // Load a project unformatted from sda V0.1
         static Pattern_Project* load_sda_0_1(std::string path);
+        // Returns the path to the root of a path
+        std::string path_to_root(std::string needed_path);
         // Save the project unformatted
         bool save_sda_0_1(std::string path);
         inline bool save_sda_0_1() {return save_sda_0_1(path_parent(a_path));};
