@@ -36,6 +36,16 @@
 // Use of the "scls" namespace to be more easily usable
 namespace scls {
 
+    // Sets the value of a variable in the file
+    void __Replica_File_Variable_Element_Base::set_variable_value(std::string variable, String value){
+        Replica_File_Variable* needed_variable = variable_by_name(variable).get();
+        if(needed_variable==0){print(std::string("SCLS Documentalist"),unknown_variable_text(variable));return;}
+        needed_variable->content = value;
+    }
+
+    // Text for an unknow variable
+    std::string __Replica_File_Variable_Element_Base::unknown_variable_text(std::string variable_name){return std::string("Unknown variable \"") + variable_name + std::string("\".");}
+
     // Most basic Pattern_Project constructor
     Pattern_Project::Pattern_Project(std::string name, std::string path) : a_name(name), a_path(path) { }
 

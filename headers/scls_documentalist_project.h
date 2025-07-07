@@ -184,7 +184,7 @@ namespace scls {
         bool __can_variable_be_created(std::shared_ptr<Pattern_Variable> variable) {return !(variable.get() == 0 || variable.get()->global || variable.get()->path_to_root);};
         virtual std::shared_ptr<Replica_File_Variable> __create_variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) = 0;
         // Returns a variable in the file
-        inline void set_variable_value(std::string variable, String value){variable_by_name(variable).get()->content = value;};
+        void set_variable_value(std::string variable, String value);
         inline std::shared_ptr<Replica_File_Variable> variable_by_pattern_variable(std::shared_ptr<Pattern_Variable> variable) {
             for(int i = 0;i<static_cast<int>(variables.size());i++) {
                 if(variables[i].get()->name == variable.get()->name) return variables[i];
@@ -207,6 +207,9 @@ namespace scls {
         std::shared_ptr<__Variables_Value_Container> global_variables;
         // Defined variables for the file
         std::vector<std::shared_ptr<Replica_File_Variable>> variables = std::vector<std::shared_ptr<Replica_File_Variable>>();
+
+        // Text for an unknow variable
+        std::string unknown_variable_text(std::string variable_name);
     };
 
     struct Replica_File_Variable_List : public Replica_File_Variable {
